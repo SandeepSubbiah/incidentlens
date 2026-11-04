@@ -58,10 +58,14 @@ export interface ContinuityRouterOptions {
   /** Secondary sink for telemetry failures. Also isolated: if it throws, routing is unaffected. */
   onTelemetryError?: (error: unknown, event: ContinuityEvent) => void;
 }
-type Breaker = { consecutiveFailures: number; openUntil: number; probeInFlight: boolean; probeSuccesses: number };
+// `generation` changes whenever the breaker opens or closes. An attempt records the generation it
+// started in, and only an attempt from the current generation may update the breaker: a slow call
+// from before an outage must not close an open breaker, steal the probe lease or skip the
+// half-open success threshold, and a slow failure from before recovery must not count against it.
+type Breaker = { consecutiveFailures: number; openUntil: number; probeInFlight: boolean; probeSuccesses: number; generation: number };
 const RETRYABLE: ReadonlySet<FailureKind> = new Set(['unavailable', 'timeout', 'rate_limit', 'invalid_response']);
 const DATA_CLASSES: ReadonlySet<string> = new Set(['public', 'internal', 'confidential', 'regulated']);
-const newBreaker = (): Breaker => ({ consecutiveFailures: 0, openUntil: 0, probeInFlight: false, probeSuccesses: 0 });
+const newBreaker = (generation = 0): Breaker => ({ consecutiveFailures: 0, openUntil: 0, probeInFlight: false, probeSuccesses: 0, generation });
 
 function isNonEmptyString(value: unknown): value is string { return typeof value === 'string' && value.length > 0; }
 function stringArray(value: unknown, field: string): string[] {
@@ -271,17 +275,20 @@ export class ContinuityRouter<T> {
           continue;
         }
         if (isProbe) breaker.probeInFlight = true;
+        const generation = breaker.generation;
         attempted++;
         this.emit({ requestId: snapshot.requestId, endpointId: endpoint.id, kind: 'try', attempt: attempted });
         try {
           const value = await this.invokeWithDeadline(endpoint, snapshot, signal, overallController.signal);
           const current = this.breakers.get(endpoint.id) ?? breaker;
-          if (isProbe) {
+          if (current.generation !== generation) {
+            // Stale: the caller still gets its result, but the breaker moved on without it.
+          } else if (isProbe) {
             const successes = current.probeSuccesses + 1;
-            if (successes >= this.halfOpenSuccessThreshold) this.breakers.set(endpoint.id, newBreaker());
-            else this.breakers.set(endpoint.id, { consecutiveFailures: current.consecutiveFailures, openUntil: current.openUntil, probeInFlight: false, probeSuccesses: successes });
+            if (successes >= this.halfOpenSuccessThreshold) this.breakers.set(endpoint.id, newBreaker(current.generation + 1));
+            else this.breakers.set(endpoint.id, { ...current, probeInFlight: false, probeSuccesses: successes });
           } else {
-            this.breakers.set(endpoint.id, newBreaker());
+            this.breakers.set(endpoint.id, newBreaker(current.generation));
           }
           this.emit({ requestId: snapshot.requestId, endpointId: endpoint.id, kind: 'success', attempt: attempted });
           return { value, endpointId: endpoint.id, attempts: attempted, fallback: endpoint.id !== primary.id };
@@ -290,10 +297,13 @@ export class ContinuityRouter<T> {
           last = error;
           const current = this.breakers.get(endpoint.id) ?? breaker;
           const callerAborted = Boolean(signal?.aborted);
-          if (isProbe) {
+          if (current.generation !== generation) {
+            // Stale: report the failure to this caller, but do not count it against the new state.
+            this.emit({ requestId: snapshot.requestId, endpointId: endpoint.id, kind: 'failure', attempt: attempted, reason: kind });
+          } else if (isProbe) {
             if (!callerAborted && RETRYABLE.has(kind)) {
               const failures = current.consecutiveFailures + 1;
-              this.breakers.set(endpoint.id, { consecutiveFailures: failures, openUntil: this.now() + this.cooldownMs, probeInFlight: false, probeSuccesses: 0 });
+              this.breakers.set(endpoint.id, { consecutiveFailures: failures, openUntil: this.now() + this.cooldownMs, probeInFlight: false, probeSuccesses: 0, generation: current.generation + 1 });
               this.emit({ requestId: snapshot.requestId, endpointId: endpoint.id, kind: 'failure', attempt: attempted, reason: kind });
               this.emit({ requestId: snapshot.requestId, endpointId: endpoint.id, kind: 'breaker_open', attempt: attempted, reason: kind });
             } else {
@@ -305,7 +315,7 @@ export class ContinuityRouter<T> {
             if (!callerAborted && RETRYABLE.has(kind)) {
               const failures = current.consecutiveFailures + 1;
               const openUntil = failures >= this.threshold ? this.now() + this.cooldownMs : 0;
-              this.breakers.set(endpoint.id, { consecutiveFailures: failures, openUntil, probeInFlight: false, probeSuccesses: 0 });
+              this.breakers.set(endpoint.id, { consecutiveFailures: failures, openUntil, probeInFlight: false, probeSuccesses: 0, generation: openUntil ? current.generation + 1 : current.generation });
               if (openUntil) this.emit({ requestId: snapshot.requestId, endpointId: endpoint.id, kind: 'breaker_open', attempt: attempted, reason: kind });
             }
           }
