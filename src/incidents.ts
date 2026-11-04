@@ -1,3 +1,4 @@
+import { realpathSync } from 'node:fs';
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { dataDir } from './paths.ts';
@@ -83,6 +84,12 @@ export function resolveArtifact(id: string, rel: string): string {
   const abs = path.resolve(root, normalized);
   if (!abs.startsWith(root + path.sep)) throw new Error(`path outside incident: ${rel}`);
   if (HIDDEN.has(normalized)) throw new Error(`no such artifact: ${rel}`);
+  // Lexical containment is not enough: a symlink inside the case could point anywhere.
+  try {
+    if (!realpathSync(abs).startsWith(realpathSync(root) + path.sep)) throw new Error(`path outside incident: ${rel}`);
+  } catch (err: any) {
+    if (err.code !== 'ENOENT') throw err;
+  }
   return abs;
 }
 

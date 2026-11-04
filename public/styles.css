@@ -231,3 +231,8 @@ dialog input { width: 100%; font: 14px var(--mono); padding: 10px; border: 1px s
 @media (prefers-reduced-motion: reduce) {
   .steps li, .working::after, .lane.working .lane-status::after { animation: none; }
 }
+
+/* Governance */
+.gate.compact { border-top: 1px solid var(--rule); padding: 12px 0 4px; }
+.gate p { margin: 6px 0; }
+.gate .reason { flex: 1; min-width: 180px; font: 14px var(--body); padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--table); color: var(--ink); min-height: 36px; }

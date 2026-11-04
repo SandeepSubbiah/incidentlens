@@ -36,9 +36,13 @@ export interface Health {
   slis: Slo[];
   breaches: Slo[];
   healthy: boolean;
+  sufficient: boolean;
+  min_runs: number;
 }
 
 const WINDOW = 8;
+// Below this many runs, indicators are shown but never treated as a breach.
+export const MIN_RUNS = 5;
 
 export function summarizeRun(file: string, run: any): RunSummary {
   const events: any[] = run.events ?? [];
@@ -102,8 +106,8 @@ export function assess(runs: RunSummary[]): Health {
     slo('citation_rejection_rate', ratio(runs.reduce((n, r) => n + r.rejected_citations, 0), citations), '<= 0.30', (v) => v > 0.3),
     slo('tool_error_rate', ratio(runs.reduce((n, r) => n + r.tool_errors, 0), calls), '<= 0.25', (v) => v > 0.25),
   ];
-  const breaches = runs.length >= 2 ? slis.filter((s) => s.breached) : [];
-  return { window: runs.length, runs, slis, breaches, healthy: breaches.length === 0 };
+  const breaches = runs.length >= MIN_RUNS ? slis.filter((s) => s.breached) : [];
+  return { window: runs.length, runs, slis, breaches, healthy: breaches.length === 0, sufficient: runs.length >= MIN_RUNS, min_runs: MIN_RUNS };
 }
 
 export async function health(): Promise<Health> {

@@ -29,6 +29,11 @@ test('responses wire: fabricated citation is rejected, revision is accepted and 
   assert.equal(report.score.correct, true);
   assert.equal(report.score.fix_target_correct, true);
   assert.equal(report.patch.status, 'applies');
+  // The fix is really applied to an isolated copy and filed as an A3 change request, not executed.
+  assert.equal(report.sandbox.status, 'applied');
+  assert.equal(report.change_request.risk, 'A3');
+  assert.equal(report.change_request.state, 'awaiting_approval');
+  assert.equal(report.change_request.execution, 'simulated');
   assert.equal(report.stats.steps, 2);
 
   // The rejection fed back to the model names the bad quote, and tool output carries line numbers.

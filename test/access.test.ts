@@ -60,14 +60,14 @@ test('roles and budgets are enforced before anything is spent', async () => {
 
 test('login sets an HttpOnly cookie; repeated bad codes are rate limited', async () => {
   const t = judge();
-  const ok = await fetch(base + '/api/session', { method: 'POST', body: JSON.stringify({ code: t }) });
+  const ok = await fetch(base + '/api/session', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code: t }) });
   assert.equal(ok.status, 200);
   assert.match(ok.headers.get('set-cookie') ?? '', /il_session=.+; HttpOnly; SameSite=Strict/);
   const cookie = (ok.headers.get('set-cookie') ?? '').split(';')[0];
   assert.equal((await (await fetch(base + '/api/session', { headers: { cookie } })).json()).role, 'judge');
 
   const statuses: number[] = [];
-  for (let i = 0; i < 11; i++) statuses.push((await fetch(base + '/api/session', { method: 'POST', body: JSON.stringify({ code: `bad-${i}` }) })).status);
+  for (let i = 0; i < 11; i++) statuses.push((await fetch(base + '/api/session', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code: `bad-${i}` }) })).status);
   assert.deepEqual(statuses.slice(0, 10), Array(10).fill(401));
   assert.equal(statuses[10], 429);
 });

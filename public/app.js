@@ -7,7 +7,7 @@ const STAMP = {
   misplaced: 'Wrong lines',
   not_found: 'Not in source',
   missing_artifact: 'No such file',
-  applies: 'Patch matches source',
+  applies: 'Lines found in source',
   mismatch: 'Patch does not match',
   no_removals: 'Additions only',
 };
@@ -445,11 +445,12 @@ function renderReport(e, isReplay) {
     </section>
     <section class="card" aria-label="Proposed fix">
       <h2 class="section-title">Proposed fix</h2>
-      <div class="cite"><span class="stamp ${e.patch.status}">${STAMP[e.patch.status]}</span>${esc(r.fix.artifact)}</div>
+      <div class="cite"><span class="stamp ${e.patch.status}">${STAMP[e.patch.status]}</span>${e.sandbox ? `<span class="stamp ${e.sandbox.status === 'applied' ? 'ok' : 'failed'}">${e.sandbox.status === 'applied' ? 'Applied to isolated copy' : 'Did not apply'}</span>` : ''}${esc(r.fix.artifact)}</div>${e.sandbox?.status === 'failed' ? `<p class="hint">${esc(e.sandbox.reason)}</p>` : ''}
       <p>${esc(r.fix.explanation)}</p>
       <pre class="code diff">${diffHtml(r.fix.patch)}</pre>
       <details style="margin-top:16px"><summary>Regression test: ${esc(r.regression_test?.name)}</summary><pre class="code">${esc(r.regression_test?.code)}</pre></details>
     </section>
+    ${e.change_request ? changeCard(e.change_request) : ''}
     <section class="card" aria-label="Next steps">
       <h2 class="section-title">Next steps</h2>
       <ul>${(r.next_steps ?? []).map((s) => `<li>${esc(s)}</li>`).join('')}</ul>
@@ -458,6 +459,7 @@ function renderReport(e, isReplay) {
       </details>
     </section>`;
   $('#result').querySelectorAll('button[data-ev]').forEach((b) => b.addEventListener('click', () => openSource(r.evidence[Number(b.dataset.ev)], e.checks[Number(b.dataset.ev)])));
+  if (e.change_request) bindChangeCard(e.change_request.id);
 }
 
 async function openSource(ev, check) {
@@ -481,6 +483,49 @@ async function openSource(ev, check) {
   if (hit) $('#source').scrollTop = hit.offsetTop - $('#source').clientHeight / 2;
 }
 
+/* Governance: Go / No-Go */
+const STATE_LABEL = { awaiting_approval: 'awaiting approval', completed: 'executed', failed: 'execution failed', denied: 'denied', vetoed: 'vetoed', expired: 'expired' };
+const STATE_CLASS = { awaiting_approval: 'queued', completed: 'done', failed: 'failed', denied: 'refuted', vetoed: 'refuted', expired: 'cancelled' };
+const KIND_LABEL = { remediation: 'production code change', 'skill-change': 'self-repair skill change', 'skill-rollback': 'skill rollback' };
+
+function changeCard(c, compact = false) {
+  const approvals = (c.decisions ?? []).filter((d) => d.decision === 'approve' && d.actor !== c.requester).length;
+  const pending = c.state === 'awaiting_approval';
+  return `<section class="${compact ? 'gate compact' : 'card gate'}" aria-label="Change approval ${esc(c.id)}" data-cr="${esc(c.id)}">
+    <h2 class="section-title">${compact ? '' : 'Go / No-Go · '}${esc(c.id)}</h2>
+    <p><span class="prio ${c.risk === 'A3' || c.risk === 'A4' ? 'p0' : 'p1'}">${esc(c.risk)}</span> ${esc(KIND_LABEL[c.kind] ?? c.kind)} · ${esc(c.title)}</p>
+    <p class="hint">Requested by ${esc(c.requester)} · ${approvals} of ${c.required_approvals} distinct approvals · ${c.execution === 'simulated' ? 'execution simulated on an isolated copy' : 'executes inside IncidentLens'} · expires ${esc(new Date(c.expires_at).toLocaleTimeString())}</p>
+    <p class="hint mono">change hash ${esc(c.hash.slice(0, 16))}… · ${esc(c.policy_version)}</p>
+    <p><span class="stamp ${STATE_CLASS[c.state] ?? ''}">${esc(STATE_LABEL[c.state] ?? c.state)}</span> <span class="hint">${esc(c.rule ?? '')}</span></p>
+    ${pending ? `<div class="actions"><input class="reason" aria-label="Reason for decision" placeholder="Reason (recorded in the audit log)" data-reason>
+      <button class="btn small" data-decide="approve">Approve</button><button class="btn secondary small" data-decide="reject">Reject</button><button class="btn danger small" data-decide="veto">Veto</button></div>` : ''}
+    <p class="error" data-error role="alert"></p>
+    ${c.result?.diff ? `<pre class="code diff">${diffHtml(c.result.diff)}</pre>` : ''}
+  </section>`;
+}
+
+function bindChangeCard(id) {
+  const card = document.querySelector(`[data-cr="${CSS.escape(id)}"]`);
+  if (!card) return;
+  card.querySelectorAll('[data-decide]').forEach((b) =>
+    b.addEventListener('click', async () => {
+      const live = (await getJson('/api/changes'))?.changes.find((c) => c.id === id);
+      if (!live) {
+        card.querySelector('[data-error]').textContent = 'This change request is not in this server ledger (recorded run).';
+        return;
+      }
+      const res = await fetch(`/api/changes/${encodeURIComponent(id)}/decision`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ decision: b.dataset.decide, reason: card.querySelector('[data-reason]').value, hash: live.hash }) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        card.querySelector('[data-error]').textContent = data.error ?? 'Decision refused.';
+        return;
+      }
+      card.outerHTML = changeCard(data, card.classList.contains('compact'));
+      bindChangeCard(id);
+    }),
+  );
+}
+
 /* Health and self-repair */
 async function showHealth() {
   state.abort?.abort();
@@ -494,7 +539,7 @@ async function showHealth() {
 }
 
 async function refreshHealth() {
-  const [h, skills, audit] = await Promise.all([getJson('/api/health'), getJson('/api/skills'), getJson('/api/audit')]);
+  const [h, skills, audit, changes] = await Promise.all([getJson('/api/health'), getJson('/api/skills'), getJson('/api/audit'), getJson('/api/changes')]);
   if (!h || !$('#health-body')) return;
   const breakers = Object.entries(h.reflexes.breakers ?? {});
   $('#health-body').innerHTML = `
@@ -519,6 +564,11 @@ async function refreshHealth() {
       ${isAdmin() ? '' : '<p class="hint">Self-repair and fault injection need an admin access code.</p>'}
       <ol class="healthlog" id="heal-log"></ol>
     </section>
+    <section class="card"><h2 class="section-title">Change requests</h2>
+      <p class="hint">Agents and the doctor only propose. Approval is bound to the exact change hash, the requester cannot approve, and a veto or expiry always wins. ${esc(changes?.policy?.version ?? '')}</p>
+      <div class="actions"><button class="btn ${changes?.kill?.on ? '' : 'danger'} small" id="kill" ${isAdmin() ? '' : 'disabled'}>${changes?.kill?.on ? 'Lift kill switch' : 'Engage kill switch'}</button><span class="status">${changes?.kill?.on ? `Kill switch on (${esc(changes.kill.by)}): nothing executes except rollbacks` : 'Kill switch off'}</span></div>
+      <div id="cr-list">${(changes?.changes ?? []).slice(0, 6).map((c) => changeCard(c, true)).join('') || '<p class="hint">No change requests yet.</p>'}</div>
+    </section>
     <section class="card"><h2 class="section-title">Skills · live versions</h2>
       <table class="ind"><thead><tr><th>Skill</th><th>Kind</th><th>Active</th><th>Last change</th></tr></thead><tbody>
       ${(skills ?? []).map((s) => {
@@ -533,6 +583,11 @@ async function refreshHealth() {
   $('#heal-run').addEventListener('click', runSelfRepair);
   document.querySelectorAll('[data-chaos]').forEach((b) => b.addEventListener('click', () => chaos(b.dataset.chaos)));
   document.querySelectorAll('[data-skill]').forEach((b) => b.addEventListener('click', () => openSkill(b.dataset.skill, Number(b.dataset.v), Number(b.dataset.prev) || 0)));
+  (changes?.changes ?? []).slice(0, 6).forEach((c) => bindChangeCard(c.id));
+  $('#kill').addEventListener('click', async () => {
+    await fetch('/api/governance/kill', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ on: !changes?.kill?.on, reason: 'set from the health page' }) });
+    refreshHealth();
+  });
 }
 
 async function chaos(fault) {

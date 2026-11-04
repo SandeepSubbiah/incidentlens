@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { mkdir, readdir, readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { AuditLog } from '../guard/audit.ts';
+import { auditLogAt, type AuditLog } from '../guard/audit.ts';
 import { constitutionStatus } from '../guard/constitution.ts';
 import { checkSkillPatch, type Violation } from '../guard/policy.ts';
 import { dataDir, ROOT } from '../paths.ts';
@@ -89,7 +89,7 @@ export class Registry {
     this.dir = dir;
     this.seedDir = seedDir;
     this.file = path.join(dir, 'registry', 'state.json');
-    this.audit = new AuditLog(path.join(dir, 'audit.jsonl'));
+    this.audit = auditLogAt(path.join(dir, 'audit.jsonl'));
   }
 
   // Mutations are serialised so concurrent requests cannot interleave read-modify-write.

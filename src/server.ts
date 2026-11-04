@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { chargeRun, gated, loginBlocked, recordLoginFailure, runsLeft, verifyToken, type AccessClaims } from './access.ts';
 import { investigate, RUNS_DIR } from './agent.ts';
 import { activeFaults, clearFaults, setOutage } from './chaos.ts';
+import { decide, GovernanceError, killSwitch, listChanges, POLICY, setKillSwitch } from './governance/changes.ts';
 import { constitutionStatus } from './guard/constitution.ts';
 import { injectBadSkillEdit, runDoctor } from './heal/doctor.ts';
 import { health } from './heal/health.ts';
@@ -51,7 +52,10 @@ function tokenFrom(req: IncomingMessage): string | undefined {
   return /(?:^|;\s*)il_session=([^;]+)/.exec(req.headers.cookie ?? '')?.[1];
 }
 
+// JSON-only bodies: a cross-site form cannot send application/json without a CORS preflight,
+// which this server never grants, so cookie-authenticated POSTs cannot be forged.
 async function body(req: IncomingMessage, limit = 16_384): Promise<any> {
+  if (!String(req.headers['content-type'] ?? '').startsWith('application/json')) throw new Error('content-type must be application/json');
   let raw = '';
   for await (const chunk of req) {
     raw += chunk;
@@ -130,6 +134,23 @@ export function createApp(): Server {
         const reg = await getRegistry();
         return json(res, 200, { ...(await health()), reflexes: reflexState(), faults: activeFaults(), constitution: { ok: constitutionStatus().ok }, audit: await reg.audit.verify(), revision: reg.revision });
       }
+      if (route === 'changes') return json(res, 200, { kill: await killSwitch(), policy: POLICY, changes: await listChanges() });
+      if (parts[1] === 'changes' && parts[3] === 'decision' && req.method === 'POST') {
+        if (!claims) return json(res, 401, { error: 'access code required' });
+        const { decision, reason, hash } = await body(req);
+        if (!['approve', 'reject', 'veto'].includes(decision)) return json(res, 400, { error: 'decision must be approve, reject or veto' });
+        try {
+          return json(res, 200, await decide(parts[2], { sub: claims.sub, role: claims.role }, decision, String(reason ?? ''), String(hash ?? '')));
+        } catch (err) {
+          if (err instanceof GovernanceError) return json(res, 409, { error: err.message, rule: err.rule });
+          throw err;
+        }
+      }
+      if (route === 'governance/kill' && req.method === 'POST') {
+        if (!requireRole('admin')) return;
+        const { on, reason } = await body(req);
+        return json(res, 200, await setKillSwitch(!!on, claims!, String(reason ?? '')));
+      }
       if (route === 'skills') return json(res, 200, (await getRegistry()).list());
       if (parts[1] === 'skills' && parts[2]) {
         const reg = await getRegistry();
@@ -190,7 +211,14 @@ export function createApp(): Server {
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  createApp().listen(PORT, () => {
-    console.log(`IncidentLens on http://localhost:${PORT}  (deep ${MODELS.deep}, fast ${MODELS.fast}, ${WIRE} API${process.env.MODEL_API_KEY ? '' : ', MODEL_API_KEY NOT SET'}${gated() ? ', access codes required' : ', open access'})`);
+  // Without access codes the server is for local use only; exposing it needs an explicit opt-in.
+  const host = process.env.HOST ?? (gated() ? '0.0.0.0' : '127.0.0.1');
+  const loopback = ['127.0.0.1', 'localhost', '::1'].includes(host);
+  if (!gated() && !loopback && process.env.INCIDENTLENS_DEV_OPEN !== '1') {
+    console.error(`Refusing to listen on ${host} without ACCESS_SECRET. Set ACCESS_SECRET (32+ chars), or INCIDENTLENS_DEV_OPEN=1 for a trusted network.`);
+    process.exit(1);
+  }
+  createApp().listen(PORT, host, () => {
+    console.log(`IncidentLens on http://${loopback ? "localhost" : host}:${PORT}  (deep ${MODELS.deep}, fast ${MODELS.fast}, ${WIRE} API${process.env.MODEL_API_KEY ? '' : ', MODEL_API_KEY NOT SET'}${gated() ? ', access codes required' : ', open access'})`);
   });
 }

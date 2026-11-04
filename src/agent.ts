@@ -4,6 +4,7 @@ import { loadConstitution } from './guard/constitution.ts';
 import { listArtifacts, loadGroundTruth, loadMeta, type IncidentMeta } from './incidents.ts';
 import { MODELS, Usage, WIRE } from './llm.ts';
 import { runToolLoop, type AgentEvent, type Emit } from './loop.ts';
+import { gateRemediation } from './remediation.ts';
 import { scoreReport } from './score.ts';
 import { buildKnowledge, loadCases, saveCase } from './skills/knowledge.ts';
 import { getRegistry, type RegistryView, type Skill } from './skills/registry.ts';
@@ -129,7 +130,8 @@ export async function investigate(incidentId: string, emit: Emit, opts: { view?:
         send({ type: 'verification', round: revisions + 1, checks, patch, accepted: ok });
         if (ok || revisions >= MAX_REVISIONS) {
           const score = scoreReport(report, await loadGroundTruth(incidentId));
-          send({ type: 'report', report, checks, patch, score, stats: stats(state.steps, started, usage), revised: revisions > 0 });
+          const gate = await gateRemediation(incidentId, meta, report, 'solo', opts.record !== false && !view.overridden.length);
+          send({ type: 'report', report, checks, patch, score, stats: stats(state.steps, started, usage), revised: revisions > 0, ...gate });
           if (ok && score.correct && !view.overridden.length) await learnCase(meta, report);
           return { done: true };
         }

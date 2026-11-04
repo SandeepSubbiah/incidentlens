@@ -51,6 +51,7 @@ export class AuditLog {
   }
 
   async verify(): Promise<{ ok: boolean; length: number; broken_at?: number }> {
+    await this.tail;
     const all = await this.entries();
     let prev = GENESIS;
     for (const e of all) {
@@ -60,4 +61,13 @@ export class AuditLog {
     }
     return { ok: true, length: all.length };
   }
+}
+
+// One writer per file: two AuditLog instances appending to the same file would race and fork
+// the chain.
+const logs = new Map<string, AuditLog>();
+export function auditLogAt(file: string): AuditLog {
+  let log = logs.get(file);
+  if (!log) logs.set(file, (log = new AuditLog(file)));
+  return log;
 }

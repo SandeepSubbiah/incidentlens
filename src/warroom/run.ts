@@ -3,6 +3,7 @@ import { loadConstitution } from '../guard/constitution.ts';
 import { listArtifacts, loadGroundTruth, loadMeta, type LiveUpdate } from '../incidents.ts';
 import { ApiError, createSession, MODELS, Usage, WIRE, type Session, type Tier, type ToolCall } from '../llm.ts';
 import type { AgentEvent, Emit } from '../loop.ts';
+import { gateRemediation } from '../remediation.ts';
 import { scoreReport } from '../score.ts';
 import { buildKnowledge, loadCases } from '../skills/knowledge.ts';
 import { getRegistry, type RegistryView } from '../skills/registry.ts';
@@ -475,7 +476,8 @@ export async function runWarRoom(incidentId: string, emit: Emit, opts: WarRoomOp
     const checks = await Promise.all(evidence.map((e) => verifyEvidence(incidentId, e)));
     const patch = patchCheck ?? (await verifyPatch(incidentId, report.fix));
     const score = scoreReport(report, await loadGroundTruth(incidentId));
-    send({ type: 'report', report, checks, patch, score, stats: { ...stats(toolCalls, started, usage), turns }, revised: false, forced: c.forced, board: board.snapshot() });
+    const gate = await gateRemediation(incidentId, meta, report, 'warroom', opts.record !== false && !view.overridden.length);
+    send({ type: 'report', report, checks, patch, score, stats: { ...stats(toolCalls, started, usage), turns }, revised: false, forced: c.forced, board: board.snapshot(), ...gate });
     if (score.correct && checks.every((x) => x.status === 'verified') && !view.overridden.length) await learnCase(meta, report);
   } catch (err: any) {
     closed = true;

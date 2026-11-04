@@ -29,6 +29,7 @@ const { getRegistry } = await import('../src/skills/registry.ts');
 const { injectBadSkillEdit, runDoctor } = await import('../src/heal/doctor.ts');
 const { assess, recentRuns } = await import('../src/heal/health.ts');
 const { selfCasesDir } = await import('../src/incidents.ts');
+const { decide, getChange } = await import('../src/governance/changes.ts');
 
 async function writeRun(incident: string, minutesAgo: number, solo: number, good: boolean) {
   const at = new Date(Date.now() - minutesAgo * 60_000).toISOString();
@@ -105,11 +106,19 @@ test('doctor with a model: policy blocks a rule-weakening patch, a validated pat
   assert.ok(validated[0].canaries.includes('inc-003-duplicate-charges'));
   assert.equal(validated[0].baseline['inc-002-oomkilled'], false, 'baseline is the newest run per incident');
   const done = events.at(-1)!;
-  assert.deepEqual([done.phase, done.action, done.skill, done.version], ['done', 'patch', 'solo', 3]);
+  assert.deepEqual([done.phase, done.action, done.skill], ['done', 'proposed', 'solo']);
+  assert.doesNotMatch(reg.view().get('solo')!.body, /Re-read every cited line range/, 'validated is not authorized: nothing changes before approval');
+
+  // The doctor cannot approve its own change; a human admin can, bound to the exact hash.
+  const cr = (await getChange(done.change))!;
+  await assert.rejects(decide(cr.id, { sub: 'doctor', role: 'admin' }, 'approve', 'self', cr.hash), /R5/);
+  const approved = await decide(cr.id, { sub: 'sandeep', role: 'admin' }, 'approve', 'restores re-reading', cr.hash);
+  assert.equal(approved.state, 'completed');
+  assert.equal(approved.result!.version, 3);
   assert.match(reg.view().get('solo')!.body, /Re-read every cited line range/);
 
   const log = await reg.audit.entries();
-  assert.ok(log.some((e) => e.action === 'skill.activate' && e.actor === 'doctor' && (e.detail as any).to === 3));
+  assert.ok(log.some((e) => e.action === 'skill.activate' && e.actor === 'human:sandeep' && (e.detail as any).to === 3));
   assert.equal((await reg.audit.verify()).ok, true);
 });
 
