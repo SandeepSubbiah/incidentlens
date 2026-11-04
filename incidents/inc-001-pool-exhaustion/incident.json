@@ -4,5 +4,13 @@
   "service": "payment-service",
   "severity": "SEV-1",
   "started_at": "2026-10-28T14:09:00Z",
-  "alert": "PagerDuty: checkout-api error rate 38% (threshold 2%) and p99 latency 31.4s (threshold 2s) for 6 minutes. Upstream: payment-service. Customer support reports card payments spinning then failing."
+  "alert": "PagerDuty: checkout-api error rate 38% (threshold 2%) and p99 latency 31.4s (threshold 2s) for 6 minutes. Upstream: payment-service. Customer support reports card payments spinning then failing.",
+  "updates": [
+    {
+      "after_turns": 4,
+      "from": "Support",
+      "text": "Checkout failures are spreading to the mobile app; the support queue doubled in the last 5 minutes.",
+      "priority": 0
+    }
+  ]
 }

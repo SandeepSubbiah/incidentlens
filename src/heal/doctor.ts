@@ -109,12 +109,16 @@ export async function injectBadSkillEdit(): Promise<{ skill: string; version: nu
 // The reflex that works without a model: a regression that began right after an unvalidated
 // skill change is answered by rolling that change back, exactly like a failed canary deploy.
 export function suspectChange(h: Health, reg: Registry) {
-  const failing = h.runs.filter((r) => !r.ok || r.correct === false || r.rejected_citations > 0);
+  const failing = h.runs.filter((r) => !r.ok || r.correct === false || r.rejected_citations / Math.max(r.citations, 1) > 0.3);
   const since = new Date(Date.parse(h.runs.at(-1)?.at || new Date().toISOString()) - 24 * 3600_000).toISOString();
+  // Only runs after a change can have been caused by it; all of them must have used it.
   return reg
     .changesSince(since)
     .filter((c) => c.author !== 'repo' && !c.reason.startsWith('rollback'))
-    .find((c) => failing.length > 0 && failing.every((r) => r.versions[c.name] === c.to));
+    .find((c) => {
+      const after = failing.filter((r) => r.at >= c.at);
+      return after.length > 0 && after.every((r) => r.versions[c.name] === c.to);
+    });
 }
 
 export async function runDoctor(emit: Emit, opts: { force?: boolean; validate?: Validator; health?: Health } = {}): Promise<AgentEvent[]> {

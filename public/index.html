@@ -11,13 +11,20 @@
 <body>
   <header class="topbar">
     <div class="brand">IncidentLens</div>
-    <div class="model" id="model"></div>
+    <div class="topbar-right">
+      <span class="model" id="model"></span>
+      <span id="access"></span>
+    </div>
   </header>
 
   <div class="layout">
-    <nav class="rail" aria-label="Incidents">
+    <nav class="rail" aria-label="Incidents and system">
       <h2 class="rail-title">Open incidents</h2>
       <ul id="incidents" class="incident-list"></ul>
+      <h2 class="rail-title rail-gap">System</h2>
+      <ul class="incident-list">
+        <li><button id="nav-health"><span>Health and self-repair</span><span class="inc-meta" id="health-chip">indicators, skills, audit log</span></button></li>
+      </ul>
       <section class="scoreboard" id="scoreboard" aria-label="Evaluation results"></section>
     </nav>
 
@@ -31,13 +38,27 @@
         <button role="tab" id="tab-source" aria-selected="false" data-tab="source">Source</button>
       </div>
       <section id="trail" class="panel" role="tabpanel" aria-labelledby="tab-trail">
-        <p class="hint">Each tool call the agent makes appears here as it happens.</p>
+        <p class="hint">Each tool call, message and decision appears here as it happens.</p>
       </section>
       <section id="source" class="panel" role="tabpanel" aria-labelledby="tab-source" hidden>
         <p class="hint">Select a citation to open the file at the cited lines.</p>
       </section>
     </aside>
   </div>
+
+  <dialog id="access-dialog" aria-labelledby="access-title">
+    <form id="access-form" method="dialog">
+      <h2 id="access-title" class="section-title">Enter access code</h2>
+      <p class="hint">Live investigations use paid model calls, so they need an access code. Recorded runs are open to everyone.</p>
+      <label for="access-code">Access code</label>
+      <input id="access-code" name="code" autocomplete="off" spellcheck="false" required>
+      <p class="error" id="access-error" role="alert"></p>
+      <div class="actions">
+        <button class="btn" type="submit">Sign in</button>
+        <button class="btn secondary" type="button" id="access-cancel">Cancel</button>
+      </div>
+    </form>
+  </dialog>
 
   <script type="module" src="app.js"></script>
 </body>

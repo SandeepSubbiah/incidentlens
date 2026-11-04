@@ -48,7 +48,7 @@ test('health: a bad skill edit shows up as breached indicators', async () => {
   for (const [i, inc] of ['inc-001-pool-exhaustion', 'inc-002-oomkilled', 'inc-003-duplicate-charges'].entries()) await writeRun(inc, 30 - i, 1, true);
   const bad = await injectBadSkillEdit();
   assert.equal(bad.version, 2);
-  for (const [i, inc] of ['inc-001-pool-exhaustion', 'inc-002-oomkilled', 'inc-004-kafka-contract'].entries()) await writeRun(inc, 3 - i, 2, false);
+  for (const [i, inc] of ['inc-001-pool-exhaustion', 'inc-002-oomkilled', 'inc-004-kafka-contract'].entries()) await writeRun(inc, -(i + 1), 2, false); // after the bad edit
 
   const h = assess(await recentRuns());
   assert.equal(h.window, 6);
