@@ -97,7 +97,7 @@ GitHub Actions.
 ## Try it
 ```
 git clone https://github.com/SandeepSubbiah/incidentlens && cd incidentlens
-npm test               # 103 tests on merged PR head, no key needed
+npm test               # 103 tests, no key needed
 npm run demo:offline   # full UI with a scripted model, http://localhost:5173
-npm start              # live, with MODEL_API_KEY
+npm start              # live, with MODEL_API_KEY set; then open /capabilities.html
 ```

@@ -13,7 +13,11 @@ not appear in your run, skip it rather than describe it.
 **Plan A:**
 1. Open a **new** PowerShell window, so it picks up `MODEL_API_KEY`, then run:
    ```powershell
-   cd C:\Users\Dell\Documents\Source\Meta\hackathon\incidentlens
+   cd incidentlens                 # your clone
+   git checkout main
+   git pull --ff-only
+   npm test                        # expect 103 of 103
+   $env:MODEL_API_KEY = [Environment]::GetEnvironmentVariable("MODEL_API_KEY", "User")
    npm start
    ```
    The terminal must print `(deep muse-wonder-1.0, fast muse-spark-1.3, responses API, open access)`.

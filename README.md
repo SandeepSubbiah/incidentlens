@@ -9,7 +9,7 @@ the source, every patch is applied to an isolated copy, and every change, includ
 IncidentLens makes to itself, goes through a governance gate that the AI cannot approve or bypass.
 
 > **Status, 2026-11-04.** The core system and the merged continuity prototype are covered by **103 automated tests**
-> (GitHub Actions passed on PR #22's final head). These tests use scripted models or deterministic
+> (GitHub Actions passes on `main`). These tests use scripted models or deterministic
 > stubs; the separate recorded live Muse evaluation is described below. **First live Muse evaluation,
 > 2026-11-04**, on `muse-wonder-1.0` and `muse-spark-1.3`, one run per incident:
 > - Solo mode found the root cause in 5 of 5 incidents, War Room mode in 5 of 5.
@@ -67,12 +67,40 @@ IncidentLens makes to itself, goes through a governance gate that the AI cannot 
 IncidentLens improves the system around Muse (skills, retrieval, routing, verification). It does
 not change Muse's model weights.
 
-## Run it
+## Build and run
 
-Requires Node 24 or newer. There are no runtime dependencies to install.
+Requires Node 24 or newer and Git. There is nothing to compile and no dependency to install:
+Node runs the TypeScript directly.
+
+**First time:**
 
 ```powershell
-npm test                 # 103 tests on merged PR head: verifier, War Room, governance, self-repair, access, guards, security, continuity, provenance
+git clone https://github.com/SandeepSubbiah/incidentlens
+cd incidentlens
+```
+
+**Every time (Windows PowerShell):**
+
+```powershell
+cd incidentlens                 # your clone
+git checkout main
+git pull --ff-only
+npm test                        # 103 tests, no API key needed
+
+# Live Muse: read the key from your Windows user environment into this window, then start.
+$env:MODEL_API_KEY = [Environment]::GetEnvironmentVariable("MODEL_API_KEY", "User")
+npm start                       # http://localhost:5173
+```
+
+On macOS or Linux, use `export MODEL_API_KEY=...` before `npm start`. Without a key, or without
+working Meta billing, run `npm run demo:offline` instead: the full UI with a scripted model,
+labelled "not Muse". Open `http://localhost:5173/capabilities.html` for an overview of what
+works today, with evidence and limits.
+
+**All commands:**
+
+```powershell
+npm test                 # 103 tests: verifier, War Room, governance, self-repair, access, guards, security, continuity, provenance
 npm run demo:offline     # full UI with a scripted model (no API key; inc-001 only), http://localhost:5173
 npm start                # live, with Muse: needs MODEL_API_KEY and working Meta billing
 npm run eval             # score solo mode on all incidents (add --warroom for War Room mode)

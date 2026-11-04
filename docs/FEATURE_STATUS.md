@@ -15,7 +15,7 @@
 
 | Evidence | Observed result | Interpretation |
 |---|---|---|
-| GitHub Actions on PR #22's final head `f1fec99` | **103 / 103 tests passed** | CI for the merged PR head; check newer commits independently |
+| GitHub Actions on PR #22's final head `f1fec99`, and on `main` after the merge (`4e56509`, `035fee1`) | **103 / 103 tests passed** each time | CI only; check newer commits independently |
 | Solo evaluation: five author-written synthetic incidents | **5/5 root causes; 5/5 answer-key fix targets; 51/51 final citations** | One real Muse Wonder run per case, not an independent benchmark |
 | War Room evaluation | **5/5 root causes; 4/5 answer-key fix targets; 58/58 final citations** | One real Wonder/Spark run per case; a different fix target was plausible but uncompiled |
 | Live continuity demo with a *simulated* Wonder outage | Spark answered; the circuit opened; later Wonder recovered | Real model responses under an injected outage, not a live provider outage |

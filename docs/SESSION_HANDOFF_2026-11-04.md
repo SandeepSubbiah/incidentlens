@@ -20,7 +20,7 @@ organizer email: an open-source GitHub repo (mandatory) and a 3-minute demo vide
 ## Repository state
 
 - Repo: https://github.com/SandeepSubbiah/incidentlens (public, MIT), branch `main`.
-- Local: `C:\Users\Dell\Documents\Source\Meta\hackathon\incidentlens`.
+- Local: your clone of the repository (`incidentlens`).
 - HEAD: the commit that adds this file, on top of `71c1941`. Run `git log --oneline -3` to
   confirm. The working tree was clean before this commit, and every earlier commit is pushed.
 - No secrets in the repo: the API key was scanned for in every file and found in 0. The key
@@ -75,7 +75,7 @@ Full detail: `docs/SPEC_COMPLIANCE_REPORT.md`, `docs/IMPLEMENTATION_GAP_MATRIX.m
 ## Commands
 
 ```powershell
-cd C:\Users\Dell\Documents\Source\Meta\hackathon\incidentlens
+cd incidentlens
 git pull; git log --oneline -3; git status --short
 npm test                                  # expect 53 of 53
 # Billing check (new terminal so MODEL_API_KEY is loaded; prints only the HTTP status):

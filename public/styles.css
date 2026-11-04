@@ -294,7 +294,8 @@ dialog input { width: 100%; font: 14px var(--mono); padding: 10px; border: 1px s
 .cap-tile { min-width: 0; border: 1px solid var(--rule); background: var(--paper); padding: 20px; border-radius: 9px; }
 .cap-tile p { margin: 0; font-size: 14px; line-height: 1.6; }
 .cap-status { display: inline-block; background: var(--ok-bg); color: var(--ok); font: 500 12px/1.5 var(--mono); padding: 3px 7px; border-radius: 4px; }
-.cap-planned { background: var(--warn-bg); color: var(--warn); }
+/* Amber for anything not finished: planned, prototype or partial. Green only for working features. */
+.cap-planned, .cap-partial { background: var(--warn-bg); color: var(--warn); }
 .cap-future { background: transparent; }
 .cap-tags { display: flex; flex-wrap: wrap; gap: 8px; }
 .cap-tags span { display: inline-block; border: 1px solid var(--rule); background: var(--paper); padding: 7px 10px; border-radius: 99px; font-size: 12px; }
