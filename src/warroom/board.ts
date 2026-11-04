@@ -138,7 +138,9 @@ export class Board {
     if (check.status === 'not_found' || check.status === 'missing_artifact') {
       this.rejectedFacts++;
       const reason = check.status === 'missing_artifact' ? `artifact ${f.artifact} does not exist` : `quote not found in ${f.artifact}`;
-      this.emit({ type: 'fact_rejected', by, artifact: f.artifact, quote: clip(String(f.quote), 200), reason });
+      // Kept whole (up to 4,000 chars, flagged beyond that) so the rejection can be audited later.
+      const quote = String(f.quote);
+      this.emit({ type: 'fact_rejected', by, artifact: f.artifact, quote: clip(quote, 4000), ...(quote.length > 4000 ? { quote_truncated: true } : {}), reason });
       return { ok: false, reason };
     }
     // A real quote with wrong line numbers is still real evidence: keep it, at the right lines.

@@ -27,14 +27,17 @@ export const PRICING: Record<string, { input: number; cached: number; output: nu
 };
 
 export class Usage {
-  byModel: Record<string, { input: number; cached: number; output: number; calls: number }> = {};
+  byModel: Record<string, { input: number; cached: number; output: number; calls: number; served?: string }> = {};
 
-  add(model: string, u: { input: number; cached: number; output: number }) {
+  // `served` is the model name the API reported in its response. The requested name is only
+  // configuration; this is the evidence of what actually answered.
+  add(model: string, u: { input: number; cached: number; output: number }, served?: string) {
     const m = (this.byModel[model] ??= { input: 0, cached: 0, output: 0, calls: 0 });
     m.input += u.input;
     m.cached += u.cached;
     m.output += u.output;
     m.calls++;
+    if (served) m.served = served;
   }
 
   get input() {
@@ -290,7 +293,7 @@ export function createSession(o: { system: string; user: string; tools: ToolDef[
 
   function finish(model: string, data: any): Turn {
     const r = wire.accept(data);
-    o.usage?.add(model, r.usage);
+    o.usage?.add(model, r.usage, typeof data?.model === 'string' ? data.model : undefined);
     return { text: r.text, calls: r.calls, model };
   }
 

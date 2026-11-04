@@ -42,6 +42,8 @@ export function verifyToken(token: string | undefined | null, secret = accessSec
     const claims = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as AccessClaims;
     if (typeof claims.exp !== 'number' || claims.exp * 1000 <= now) return null;
     if (claims.role !== 'judge' && claims.role !== 'admin') return null;
+    // A missing or non-numeric run budget would otherwise make runsLeft() NaN, which never blocks.
+    if (typeof claims.sub !== 'string' || !claims.sub || typeof claims.runs !== 'number' || !(claims.runs >= 0)) return null;
     return claims;
   } catch {
     return null;
@@ -49,22 +51,30 @@ export function verifyToken(token: string | undefined | null, secret = accessSec
 }
 
 const usageFile = () => path.join(dataDir(), 'access-usage.json');
-let usage: Record<string, { runs: number; last: string }> | null = null;
+// One shared load, so concurrent first requests all count against the same object.
+let usage: Promise<Record<string, { runs: number; last: string }>> | null = null;
 
-async function loadUsage() {
-  usage ??= JSON.parse(await readFile(usageFile(), 'utf8').catch(() => '{}'));
-  return usage!;
+function loadUsage() {
+  usage ??= readFile(usageFile(), 'utf8')
+    .catch(() => '{}')
+    .then((raw) => JSON.parse(raw));
+  return usage;
 }
 
 export async function runsLeft(c: AccessClaims): Promise<number> {
   return Math.max(0, c.runs - ((await loadUsage())[c.sub]?.runs ?? 0));
 }
 
-export async function chargeRun(c: AccessClaims): Promise<void> {
+// Checks the budget and counts the run in one synchronous step, so two concurrent requests
+// cannot both spend the last run.
+export async function reserveRun(c: AccessClaims): Promise<boolean> {
   const u = await loadUsage();
-  u[c.sub] = { runs: (u[c.sub]?.runs ?? 0) + 1, last: new Date().toISOString() };
+  const used = u[c.sub]?.runs ?? 0;
+  if (c.runs - used <= 0) return false;
+  u[c.sub] = { runs: used + 1, last: new Date().toISOString() };
   await mkdir(path.dirname(usageFile()), { recursive: true });
   await writeFile(usageFile(), JSON.stringify(u, null, 2));
+  return true;
 }
 
 // Fixed-window limiter for failed logins, per client address.

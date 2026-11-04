@@ -12,6 +12,7 @@
     "eval": "node src/eval.ts",
     "test": "node --test \"test/**/*.test.ts\"",
     "demo:offline": "node scripts/offline-demo.ts",
-    "mint-token": "node src/cli/mint-token.ts"
+    "mint-token": "node src/cli/mint-token.ts",
+    "sentinel:smoke": "node scripts/sentinel-smoke.ts --out eval/sentinel/smoke-latest.json"
   }
 }

@@ -1,0 +1,301 @@
+{
+  "pack": "sentinel-smoke",
+  "version": 1,
+  "at": "2026-11-04T16:50:22.583Z",
+  "commit": "755ec4d",
+  "dirty": true,
+  "node": "v24.18.0",
+  "environment": "isolated-fixture: temp dirs, local scripted model, synthetic key; no network beyond 127.0.0.1",
+  "live_inference": false,
+  "counts": {
+    "PASS": 15,
+    "FAIL": 6,
+    "ERROR": 0,
+    "UNTESTED": 0
+  },
+  "results": [
+    {
+      "id": "D10",
+      "title": "A cross-site GET cannot start a billable investigation (local open mode)",
+      "refs": [
+        "OWASP A01",
+        "OWASP LLM10",
+        "CWE-352"
+      ],
+      "expected": "Requests a browser marks cross-site or same-site are refused before any model call",
+      "status": "PASS",
+      "observed": "same-origin control: HTTP 200, 35 model calls; cross-site: HTTP 403; same-site: HTTP 403; model calls caused by them: 0"
+    },
+    {
+      "id": "D10b",
+      "title": "A cross-site GET cannot start self-repair (local open mode)",
+      "refs": [
+        "OWASP A01",
+        "CWE-352"
+      ],
+      "expected": "Refused with 403",
+      "status": "PASS",
+      "observed": "same-origin control HTTP 200; cross-site HTTP 403"
+    },
+    {
+      "id": "D08",
+      "title": "Concurrent requests cannot spend the same last run of an access code",
+      "refs": [
+        "OWASP A06",
+        "CWE-362",
+        "OWASP LLM10"
+      ],
+      "expected": "A code with 1 run starts exactly 1 of 2 simultaneous investigations",
+      "status": "PASS",
+      "observed": "code with 2 runs: 2 of 2 started (control); code with 1 run: 1 of 2 started"
+    },
+    {
+      "id": "D05",
+      "title": "A correctly signed code with an invalid payload is rejected",
+      "refs": [
+        "OWASP A07",
+        "CWE-20"
+      ],
+      "expected": "Missing or non-numeric runs, or a missing subject, fails verification",
+      "status": "PASS",
+      "observed": "valid code accepted; 3 malformed payloads rejected"
+    },
+    {
+      "id": "D13",
+      "title": "A judge code cannot perform admin actions",
+      "refs": [
+        "OWASP A01"
+      ],
+      "expected": "Fault injection, self-repair and the kill switch return 403 for a judge, 200 for an admin",
+      "status": "PASS",
+      "observed": "admin control 200; judge: chaos 403, kill switch 403, self-repair 403"
+    },
+    {
+      "id": "D01",
+      "title": "Read endpoints require a code when access codes are on",
+      "refs": [
+        "OWASP A01",
+        "OWASP API1"
+      ],
+      "expected": "Audit log, change requests, skills, runs and evidence return 401 without a code",
+      "status": "FAIL",
+      "observed": "readable without a code: /api/audit 200; /api/changes 200; /api/skills/solo 200; /api/runs/inc-001-pool-exhaustion 404; /api/incidents/inc-001-pool-exhaustion/artifact 200",
+      "disposition": "risk accepted for the demo (README: read-only views are public); must change before any customer data"
+    },
+    {
+      "id": "C04/C08",
+      "title": "Answer keys and paths outside the case cannot be read through the evidence API",
+      "refs": [
+        "OWASP A01",
+        "CWE-22"
+      ],
+      "expected": "ground-truth.json, incident.json and traversal paths are refused; a real log is served",
+      "status": "PASS",
+      "observed": "control 200; 6 probes refused"
+    },
+    {
+      "id": "G11",
+      "title": "Security headers on pages and API responses",
+      "refs": [
+        "OWASP A02",
+        "OWASP A08"
+      ],
+      "expected": "CSP with frame-ancestors 'none', nosniff and no-referrer on both",
+      "status": "PASS",
+      "observed": "present on / and /api/config (note: style-src allows 'unsafe-inline')"
+    },
+    {
+      "id": "A10",
+      "title": "Error responses do not reveal server file paths",
+      "refs": [
+        "OWASP A10",
+        "CWE-209"
+      ],
+      "expected": "No absolute path in any error body",
+      "status": "PASS",
+      "observed": "6 error probes, no path revealed (detector checked with a planted path)"
+    },
+    {
+      "id": "F05",
+      "title": "A client disconnect stops the server-side investigation",
+      "refs": [
+        "OWASP LLM10",
+        "Sentinel safety rule 13"
+      ],
+      "expected": "No further model calls after the client aborts",
+      "status": "FAIL",
+      "observed": "7 model calls in the 1.5 s after the client disconnected"
+    },
+    {
+      "id": "B09a",
+      "title": "A completed run records the model the API said served it",
+      "refs": [
+        "OWASP LLM09",
+        "Sentinel provenance"
+      ],
+      "expected": "report.stats.models[*].served names the responding model",
+      "status": "PASS",
+      "observed": "record names \"muse-wonder-1.0\" as configured; served: [\"sentinel-scripted\"]"
+    },
+    {
+      "id": "B09b",
+      "title": "A failed run still records its spend and the model that answered",
+      "refs": [
+        "OWASP LLM10",
+        "Sentinel provenance"
+      ],
+      "expected": "The error event carries usage with served model names",
+      "status": "PASS",
+      "observed": "error event usage: $0.0008, served [\"sentinel-scripted\"]"
+    },
+    {
+      "id": "B04",
+      "title": "An elided quote cannot stitch distant lines into one statement",
+      "refs": [
+        "OWASP LLM09",
+        "Sentinel B04"
+      ],
+      "expected": "Fragments far apart are rejected even inside a wide cited range",
+      "status": "FAIL",
+      "observed": "contiguous control verified; quote stitched from lines 4 and 22 with \"...\": verified"
+    },
+    {
+      "id": "B03",
+      "title": "A real quote cited for a false conclusion is flagged",
+      "refs": [
+        "OWASP LLM09",
+        "Sentinel B03"
+      ],
+      "expected": "Claim-level check marks the inference unsupported",
+      "status": "FAIL",
+      "observed": "quote verified (verified) while cited for \"GC pauses caused the outage\"; no claim-level check exists",
+      "disposition": "known limit, stated in README; claim verification is issue #6"
+    },
+    {
+      "id": "B19",
+      "title": "Scoring cannot be passed by naming the right terms in a wrong diagnosis",
+      "refs": [
+        "Sentinel B19",
+        "evaluation integrity"
+      ],
+      "expected": "A report that negates every key term scores wrong",
+      "status": "FAIL",
+      "observed": "correct report scores correct, unrelated scores wrong (controls); report negating all three terms scores CORRECT",
+      "disposition": "known limit of keyword scoring; live results must keep saying \"keyword scoring\""
+    },
+    {
+      "id": "H-EV1",
+      "title": "A rejected fact is recorded in full, so the rejection can be audited",
+      "refs": [
+        "OWASP A09",
+        "Sentinel §6"
+      ],
+      "expected": "The fact_rejected event keeps the whole quote (or flags truncation)",
+      "status": "PASS",
+      "observed": "posted 543 chars; record kept 543, complete"
+    },
+    {
+      "id": "G20",
+      "title": "Deleting the newest audit entries is detected",
+      "refs": [
+        "OWASP A09",
+        "Sentinel §6"
+      ],
+      "expected": "verify() fails after the tail is truncated",
+      "status": "FAIL",
+      "observed": "edited entry detected (control); after deleting the last entry verify() says ok=true, length 2",
+      "disposition": "needs an external anchor (issue #1 durable store); a local chain cannot prove its own tail"
+    },
+    {
+      "id": "H01-H08",
+      "title": "Governance: deny, stale hash, expiry, veto, kill switch, conflicts, restart",
+      "refs": [
+        "Sentinel H01-H08"
+      ],
+      "expected": "test/governance.test.ts passes",
+      "status": "PASS",
+      "observed": "test/governance.test.ts: 4 passed, 0 failed"
+    },
+    {
+      "id": "D16/D17",
+      "title": "Governance races: veto and kill switch against execution",
+      "refs": [
+        "Sentinel D16",
+        "Sentinel D17"
+      ],
+      "expected": "test/governance-races.test.ts passes",
+      "status": "PASS",
+      "observed": "test/governance-races.test.ts: 6 passed, 0 failed"
+    },
+    {
+      "id": "H11-H13/A02",
+      "title": "Policy guard, constitution pin, injection quarantine, audit chain",
+      "refs": [
+        "Sentinel H11",
+        "Sentinel H12",
+        "Sentinel A02"
+      ],
+      "expected": "test/guard.test.ts passes",
+      "status": "PASS",
+      "observed": "test/guard.test.ts: 7 passed, 0 failed"
+    },
+    {
+      "id": "C09",
+      "title": "Path containment, symlink and junction escape, fail-closed exposure",
+      "refs": [
+        "CWE-22",
+        "CWE-59"
+      ],
+      "expected": "test/paths.test.ts passes",
+      "status": "PASS",
+      "observed": "test/paths.test.ts: 2 passed, 0 failed"
+    }
+  ],
+  "untested": [
+    {
+      "ids": "A01, A03-A15",
+      "status": "UNTESTED",
+      "why": "Live-model prompt-injection resistance beyond the inc-005 fixture (needs a bounded, opt-in Muse probe pack)"
+    },
+    {
+      "ids": "B01-B20 (except B03, B04, B09, B19)",
+      "status": "UNTESTED",
+      "why": "Truth and focus measures need the claim verifier and focus governor (issues #6, #7)"
+    },
+    {
+      "ids": "C01-C03, C05-C07, C10-C20",
+      "status": "UNTESTED",
+      "why": "RAG poisoning, memory and multi-agent trust scenarios (issue #9)"
+    },
+    {
+      "ids": "D02-D04, D06-D07, D09, D11-D12, D14-D15, D18-D20",
+      "status": "UNTESTED",
+      "why": "Covered partly by test/access.test.ts and governance tests; no revocation or tenants exist yet (issue #2)"
+    },
+    {
+      "ids": "E01-E20",
+      "status": "UNTESTED",
+      "why": "No compile/test sandbox exists, so generated code is never executed (issue #3)"
+    },
+    {
+      "ids": "F01-F04, F06-F20 and cloud importers",
+      "status": "UNTESTED",
+      "why": "Reflex tests exist in test/reflexes.test.ts; cloud importers are not built (issue #11)"
+    },
+    {
+      "ids": "G01-G10, G12-G19",
+      "status": "UNTESTED",
+      "why": "No SAST, dependency, secret or CI-permission scanners run yet (issue #15)"
+    },
+    {
+      "ids": "H14-H20",
+      "status": "UNTESTED",
+      "why": "Held-out evaluation, decoys and alert flooding are not built (issues #10, #13)"
+    },
+    {
+      "ids": "I01-I12",
+      "status": "UNTESTED",
+      "why": "Discovery research (mutation, metamorphic, differential) not started"
+    }
+  ]
+}

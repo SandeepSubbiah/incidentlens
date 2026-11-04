@@ -2,7 +2,7 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { chargeRun, gated, loginBlocked, recordLoginFailure, runsLeft, verifyToken, type AccessClaims } from './access.ts';
+import { gated, loginBlocked, recordLoginFailure, reserveRun, runsLeft, verifyToken, type AccessClaims } from './access.ts';
 import { investigate, RUNS_DIR } from './agent.ts';
 import { activeFaults, clearFaults, setOutage } from './chaos.ts';
 import { decide, GovernanceError, killSwitch, listChanges, POLICY, setKillSwitch } from './governance/changes.ts';
@@ -64,6 +64,14 @@ async function body(req: IncomingMessage, limit = 16_384): Promise<any> {
   return raw ? JSON.parse(raw) : {};
 }
 
+// Live investigations and self-repair start on a GET, so the UI can stream them, which means a
+// page on another site can make the browser send one too. Fetch Metadata says when it did.
+// Requests without the header (curl, scripts, older browsers) are unaffected.
+function crossSite(req: IncomingMessage): boolean {
+  const site = req.headers['sec-fetch-site'];
+  return site === 'cross-site' || site === 'same-site';
+}
+
 async function latestRun(id: string, mode: string): Promise<any | null> {
   const dir = path.join(RUNS_DIR, id);
   const files = (await readdir(dir).catch(() => [] as string[])).filter((f) => f.endsWith('.json')).sort().reverse();
@@ -99,6 +107,8 @@ export function createApp(): Server {
         return true;
       };
       const route = parts.slice(1).join('/');
+      const startsWork = req.method !== 'GET' || (parts[1] === 'investigate' && !!parts[2]) || route === 'heal/run';
+      if (startsWork && crossSite(req)) return json(res, 403, { error: 'cross-site request refused' });
 
       if (route === 'session' && req.method === 'POST') {
         if (loginBlocked(ip)) return json(res, 429, { error: 'too many attempts; wait a minute' });
@@ -165,11 +175,13 @@ export function createApp(): Server {
 
       if (parts[1] === 'investigate' && parts[2]) {
         if (!requireRole('judge')) return;
-        if (gated() && (await runsLeft(claims!)) <= 0) return json(res, 429, { error: 'this access code has no live investigations left' });
-        if (liveRuns >= MAX_LIVE_RUNS) return json(res, 429, { error: 'the server is busy with other investigations; try again shortly' });
         await listArtifacts(parts[2]); // 404s an unknown incident before any spend
+        if (liveRuns >= MAX_LIVE_RUNS) return json(res, 429, { error: 'the server is busy with other investigations; try again shortly' });
         liveRuns++;
-        if (gated()) await chargeRun(claims!);
+        if (gated() && !(await reserveRun(claims!))) {
+          liveRuns--;
+          return json(res, 429, { error: 'this access code has no live investigations left' });
+        }
         const stream = sse(res);
         try {
           const run = url.searchParams.get('mode') === 'warroom' ? runWarRoom : investigate;
@@ -205,7 +217,8 @@ export function createApp(): Server {
       return json(res, 404, { error: 'not found' });
     } catch (err: any) {
       const status = /no such artifact|invalid incident id|ENOENT/.test(err.message) ? 404 : 400;
-      if (!res.headersSent) json(res, status, { error: err.message });
+      // Filesystem errors carry absolute server paths; say only that the thing was not found.
+      if (!res.headersSent) json(res, status, { error: /ENOENT/.test(err.message) ? 'not found' : err.message });
       else res.end();
     }
   });

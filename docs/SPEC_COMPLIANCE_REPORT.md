@@ -82,7 +82,7 @@ Corrupted memory is missing.
 |---|---|
 | Re-verify Muse access | Done: HTTP 200 on both models, 2026-11-04 10:13 ET |
 | Sentinel Assurance Panel (five categories) | **Missing** |
-| Deterministic pack: S01, S02, S06, S08, S14, S15, S20, S24 plus a negative control | **Partial.** S08 done; S01, S02, S06 and S20 partial; S14, S15 and S24 missing; no `npm run sentinel:test` |
+| Deterministic pack: S01, S02, S06, S08, S14, S15, S20, S24 plus a negative control | **Partial.** S08 done; S01, S02, S06 and S20 partial; S14, S15 and S24 missing; `npm run sentinel:smoke` now runs 21 offline scenarios (see SECURITY_ASSURANCE_FINDINGS.md) |
 | Full assurance sequence | Partial (mocked); claim-level rejection missing |
 | Video and submission | Owner |
 
@@ -125,7 +125,7 @@ Corrupted memory is missing.
 2. A governance gate whose race tests failed against the earlier code; three defects fixed.
 3. Self-repair that cannot see its grader or edit its constitution, with human approval.
 4. Honest labelling: "not Muse", synthetic, simulated.
-5. 53 tests in CI, clean clone, and docs that map claims to tests.
+5. 60 tests in CI (53 at the time of this report), clean clone, and docs that map claims to tests.
 
 ## Largest gaps, in order
 

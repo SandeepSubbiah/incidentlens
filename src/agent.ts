@@ -140,7 +140,8 @@ export async function investigate(incidentId: string, emit: Emit, opts: { view?:
       },
     });
   } catch (err: any) {
-    send({ type: 'error', message: err.message });
+    // Spend and the models that actually answered are recorded even when the run fails.
+    send({ type: 'error', message: err.message, usage: { cost_usd: usage.cost, models: usage.byModel } });
   } finally {
     if (opts.record !== false) await saveRun(incidentId, events).catch(() => {});
   }

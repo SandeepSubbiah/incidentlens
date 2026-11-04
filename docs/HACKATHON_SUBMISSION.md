@@ -54,7 +54,7 @@ explicit (approvals bound to the exact change, veto, expiry, kill switch).
    Its constitution is pinned by hash in code.
 
 ## What is real and what is simulated
-- Implemented and covered by 53 automated tests in CI: verification, the War Room scheduler,
+- Implemented and covered by 60 automated tests in CI: verification, the War Room scheduler,
   governance, self-repair, retrieval, access control and the guards.
 - **Live Muse results (2026-11-04, one run per incident).**
   - Solo (`muse-wonder-1.0`): 5 of 5 root causes correct, 5 of 5 fix targets, 51 of 51
@@ -62,7 +62,8 @@ explicit (approvals bound to the exact change, veto, expiry, kill switch).
   - War Room (Wonder plus Spark): 5 of 5 root causes, 4 of 5 fix targets, 58 of 58 citations
     verified, $3.42.
   - The verifier refused 5 of 160 facts the agents posted: three misquotes (two timestamps and a
-    diff line) and two quotes cut short with "…".
+    diff line) and two longer quotes whose cause the run record cannot show (it kept only their
+    first 200 characters).
 
   This is n = 1 on five incidents we wrote, not a benchmark, and on these the War Room was no
   more accurate than solo mode. Details:
@@ -82,7 +83,7 @@ GitHub Actions.
 ## Try it
 ```
 git clone https://github.com/SandeepSubbiah/incidentlens && cd incidentlens
-npm test               # 53 tests, no key needed
+npm test               # 60 tests, no key needed
 npm run demo:offline   # full UI with a scripted model, http://localhost:5173
 npm start              # live, with MODEL_API_KEY
 ```
