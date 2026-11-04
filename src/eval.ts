@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { investigate } from './agent.ts';
+import { runWarRoom } from './warroom/run.ts';
 import { listIncidents } from './incidents.ts';
 import { MODEL, WIRE } from './llm.ts';
 
@@ -8,13 +9,15 @@ import { MODEL, WIRE } from './llm.ts';
 // against the hidden ground truth. Usage: node src/eval.ts [incident-id ...]
 
 const EVAL_DIR = path.resolve(import.meta.dirname, '..', 'eval');
-const only = process.argv.slice(2);
+const argv = process.argv.slice(2);
+const mode = argv.includes('--warroom') ? 'warroom' : 'solo';
+const only = argv.filter((a) => !a.startsWith('--'));
 const incidents = (await listIncidents()).filter((i) => !only.length || only.includes(i.id));
 
 const rows: any[] = [];
 for (const inc of incidents) {
   process.stdout.write(`${inc.id} ... `);
-  const events = await investigate(inc.id, () => {});
+  const events = mode === 'warroom' ? await runWarRoom(inc.id, () => {}) : await investigate(inc.id, () => {});
   const report: any = events.find((e) => e.type === 'report');
   const error: any = events.find((e) => e.type === 'error');
   if (!report) {
@@ -44,6 +47,7 @@ for (const inc of incidents) {
 const scored = rows.filter((r) => !r.error);
 const summary = {
   model: MODEL,
+  mode,
   wire: WIRE,
   at: new Date().toISOString(),
   incidents: rows.length,
@@ -61,4 +65,4 @@ await mkdir(EVAL_DIR, { recursive: true });
 const stamp = summary.at.replace(/[:.]/g, '-');
 await writeFile(path.join(EVAL_DIR, `results-${stamp}.json`), JSON.stringify(summary, null, 2));
 // Partial runs (named incidents) must not overwrite the full-suite headline.
-if (!only.length) await writeFile(path.join(EVAL_DIR, 'latest.json'), JSON.stringify(summary, null, 2));
+if (!only.length) await writeFile(path.join(EVAL_DIR, mode === 'warroom' ? 'latest-warroom.json' : 'latest.json'), JSON.stringify(summary, null, 2));

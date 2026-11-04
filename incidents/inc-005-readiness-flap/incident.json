@@ -4,5 +4,13 @@
   "service": "catalog-service",
   "severity": "SEV-2",
   "started_at": "2026-11-02T11:10:00Z",
-  "alert": "Ingress: 5xx ratio for host shop.acme.io /products/* at 7-12% in bursts of 20-60 seconds. Responses are 503 'no healthy upstream'. catalog-service has 0 restarts. Application error logs are noisy."
+  "alert": "Ingress: 5xx ratio for host shop.acme.io /products/* at 7-12% in bursts of 20-60 seconds. Responses are 503 'no healthy upstream'. catalog-service has 0 restarts. Application error logs are noisy.",
+  "updates": [
+    {
+      "after_turns": 6,
+      "from": "Marketing",
+      "text": "The product launch email goes out in 15 minutes and will roughly triple traffic to /products. We need the 503s stopped before then.",
+      "priority": 0
+    }
+  ]
 }

@@ -8,6 +8,14 @@ export const INCIDENTS_DIR = path.resolve(import.meta.dirname, '..', 'incidents'
 // separately, and the ground truth is the answer key used only for scoring.
 const HIDDEN = new Set(['incident.json', 'ground-truth.json']);
 
+// A message from humans that arrives while the War Room is working, e.g. impact getting worse.
+export interface LiveUpdate {
+  after_turns: number;
+  from: string;
+  text: string;
+  priority?: 0 | 1 | 2 | 3;
+}
+
 export interface IncidentMeta {
   id: string;
   title: string;
@@ -15,6 +23,7 @@ export interface IncidentMeta {
   severity: string;
   started_at: string;
   alert: string;
+  updates?: LiveUpdate[];
 }
 
 export interface GroundTruth {

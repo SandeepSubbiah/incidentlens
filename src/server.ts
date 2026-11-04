@@ -4,6 +4,7 @@ import path from 'node:path';
 import { investigate, RUNS_DIR } from './agent.ts';
 import { listArtifacts, listIncidents, readArtifact } from './incidents.ts';
 import { MODEL, WIRE } from './llm.ts';
+import { runWarRoom } from './warroom/run.ts';
 
 const PORT = Number(process.env.PORT ?? 5173);
 const PUBLIC_DIR = path.resolve(import.meta.dirname, '..', 'public');
@@ -48,7 +49,8 @@ const server = createServer(async (req, res) => {
       if (parts[1] === 'investigate' && parts[2]) {
         res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache', connection: 'keep-alive' });
         const ping = setInterval(() => res.write(': ping\n\n'), 15000);
-        await investigate(parts[2], (e) => res.write(`data: ${JSON.stringify(e)}\n\n`));
+        const run = url.searchParams.get('mode') === 'warroom' ? runWarRoom : investigate;
+        await run(parts[2], (e) => res.write(`data: ${JSON.stringify(e)}\n\n`));
         clearInterval(ping);
         res.write('event: done\ndata: {}\n\n');
         return res.end();
