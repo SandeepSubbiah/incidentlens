@@ -35,6 +35,9 @@ that morning the API returned `402 billing_not_configured`.
 | Symlink and junction escape from a case | Implemented + verified | `paths.test.ts` |
 | Durable, multi-instance, restart-safe state | **Partial**: JSON files, atomic writes, write-ahead execution record, restart recovery tested; no multi-instance locking | `governance-races.test.ts` |
 | Security smoke pack (`npm run sentinel:smoke`) | Implemented: 21 offline scenarios; 15 PASS, 6 FAIL for open findings (SECURITY_ASSURANCE_FINDINGS.md) | `scripts/sentinel-smoke.ts`, `test/security.test.ts` |
+| Model failover Wonder→Spark, circuit breaker, recovery, served-model record | Implemented + verified; **live**: injected Wonder outage, run completed on Spark, recovery after cooldown (n = 1, CONTINUITY_DEMO.md) | `continuity-demo.test.ts`, `reflexes.test.ts` |
+| Evolution Ledger (faults become hash-chained improvement proposals) | Implemented + verified; proposal-only, no governance side effects | `continuity-demo.test.ts` |
+| Streamed-response recovery, multi-instance HA, zero-downtime deploys | **Missing** | |
 | Access-code revocation | **Missing** | |
 | UI: solo, War Room, health, governance | Implemented; checked with Playwright scripts outside CI, offline and live (replay of a live War Room run, one live solo run). Responsive from 320px phones to 3840px monitors: no horizontal scroll at 11 widths, no text under 12px, 44px touch targets on phones (measured 2026-11-04) | |
 | Offline demo mode | Implemented + smoke-tested | `scripts/offline-demo.ts` |

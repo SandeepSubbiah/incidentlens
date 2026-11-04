@@ -20,6 +20,7 @@ const HEAL_LABEL = {
   'param-negotiation': 'Adapted request',
   'history-compat': 'Adapted history',
   'rate-limited': 'Rate limited',
+  'transport-retry': 'Connection retry',
 };
 
 const state = { config: {}, session: {}, incidents: [], current: null, mode: 'solo', abort: null, tasks: new Map(), facts: [], quarantined: 0, rejected: 0 };
@@ -412,6 +413,9 @@ function renderReport(e, isReplay) {
   const keep = isReplay ? $('#result').innerHTML : '';
   const conf = Math.round((r.confidence ?? 0) * 100);
   const cost = e.stats.cost_usd !== undefined ? ` · <strong>$${e.stats.cost_usd.toFixed(3)}</strong>` : '';
+  // Older records only know the requested model; say so rather than imply the API confirmed it.
+  const models = Object.entries(e.stats.models ?? {});
+  const answered = models.length ? `<span>${models.every(([, m]) => m.served) ? 'Answered by' : 'Requested'} ${models.map(([req, m]) => `<strong>${esc(m.served ?? req)}</strong> ×${m.calls}`).join(', ')}</span>` : '';
   $('#result').innerHTML =
     keep +
     `
@@ -424,6 +428,7 @@ function renderReport(e, isReplay) {
         <span>Category <strong>${esc(r.category)}</strong></span>
         <span><strong>${verified}/${e.checks.length}</strong> citations verified${e.revised ? ' after one revision' : ''}</span>
         <span><strong>${e.stats.steps}</strong> tool calls · <strong>${e.stats.seconds}s</strong>${cost}</span>
+        ${answered}
         ${state.quarantined ? `<span><strong>${state.quarantined}</strong> injection attempt${state.quarantined > 1 ? 's' : ''} quarantined</span>` : ''}
       </div>
     </section>
@@ -542,7 +547,7 @@ async function showHealth() {
 }
 
 async function refreshHealth() {
-  const [h, skills, audit, changes] = await Promise.all([getJson('/api/health'), getJson('/api/skills'), getJson('/api/audit'), getJson('/api/changes')]);
+  const [h, skills, audit, changes, evo] = await Promise.all([getJson('/api/health'), getJson('/api/skills'), getJson('/api/audit'), getJson('/api/changes'), getJson('/api/evolution')]);
   if (!h || !$('#health-body')) return;
   const breakers = Object.entries(h.reflexes.breakers ?? {});
   $('#health-body').innerHTML = `
@@ -569,6 +574,10 @@ async function refreshHealth() {
       ${h.reflexes.rejected_params.length ? ` <span class="chip">adapted: ${esc(h.reflexes.rejected_params.join(', '))} not sent</span>` : ''}
       ${h.faults.map((f) => ` <span class="chip">fault: ${esc(f.kind)} ${esc(f.model)} until ${esc(new Date(f.until).toLocaleTimeString())}</span>`).join('')}</p>
     </section>
+    <section class="card span-2"><h2 class="section-title">Evolution ledger · improvement opportunities</h2>
+      <p class="hint">Faults seen in recorded runs become proposals, each linked to its run. Entries change nothing by themselves. ${evo?.verify?.ok ? `<span class="stamp ok">chain intact · ${evo.verify.length} entries</span>` : evo?.verify ? `<span class="stamp breached">broken at #${evo.verify.broken_at}</span>` : ''}</p>
+      ${(evo?.entries ?? []).slice(0, 6).map(evoItem).join('') || '<p class="hint">No opportunities yet. A model failover or a quarantined injection in a recorded run adds one.</p>'}
+    </section>
     <section class="card span-2"><h2 class="section-title">Change requests</h2>
       <p class="hint">Agents and the doctor only propose. Approval is bound to the exact change hash, the requester cannot approve, and a veto or expiry always wins. ${esc(changes?.policy?.version ?? '')}</p>
       <div class="actions"><button class="btn ${changes?.kill?.on ? '' : 'danger'} small" id="kill" ${isAdmin() ? '' : 'disabled'}>${changes?.kill?.on ? 'Lift kill switch' : 'Engage kill switch'}</button><span class="status">${changes?.kill?.on ? `Kill switch on (${esc(changes.kill.by)}): nothing executes except rollbacks` : 'Kill switch off'}</span></div>
@@ -593,6 +602,19 @@ async function refreshHealth() {
     await fetch('/api/governance/kill', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ on: !changes?.kill?.on, reason: 'set from the health page' }) });
     refreshHealth();
   });
+}
+
+function evoItem(a) {
+  const d = a.detail ?? {};
+  const o = d.outcome ?? {};
+  const answered = (o.models ?? []).map((m) => `${esc(m.served ?? `${m.requested} (requested)`)} ×${m.calls}`).join(', ');
+  const result = o.completed ? `run completed${o.diagnosis_correct === null ? '' : `, diagnosis ${o.diagnosis_correct ? 'correct' : 'wrong'}`}${answered ? `, answered by ${answered}` : ''}` : `run failed: ${esc(o.error ?? '')}`;
+  return `<div class="gate compact">
+    <p><span class="stamp ${d.category === 'security' ? 'breached' : 'open'}">${esc(d.category)}</span> <strong>${esc(String(d.signal).replace(/-/g, ' '))}</strong> · ${d.occurrences} event${d.occurrences === 1 ? '' : 's'} · ${d.simulated ? '<span class="stamp queued">simulated fault</span>' : '<span class="stamp verified">observed in a real run</span>'} · <span class="hint">#${a.seq} ${esc(new Date(a.at).toLocaleString())}</span></p>
+    <p class="hint">${esc(d.first ?? (d.lines ?? []).join(', '))}</p>
+    <p>${result}${o.cost_usd != null ? ` · $${Number(o.cost_usd).toFixed(3)}` : ''}</p>
+    <p class="hint">Proposal: ${esc(d.proposal)} Evidence: <code>${esc(a.target)}</code> · regression test: ${esc(d.regression_test)} · status <span class="stamp open">${esc(d.status)}</span></p>
+  </div>`;
 }
 
 async function chaos(fault) {

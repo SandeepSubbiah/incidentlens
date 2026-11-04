@@ -106,10 +106,10 @@ Plan B only scripts inc-001.
   > audited."
 
 **2:45–3:00 — Close.**
-- **Plan A:** "Open source, 60 automated tests. On live Muse, it diagnosed all five of our test
+- **Plan A:** "Open source, 65 automated tests. On live Muse, it diagnosed all five of our test
   incidents correctly in solo mode, with every cited quote verified. Evidence first, humans in
   charge." Only say this if the numbers in `docs/EVALUATION_PROTOCOL.md` still say so.
-- **Plan B:** "Open source, 60 automated tests. It is built for Muse Wonder and Muse Spark; this
+- **Plan B:** "Open source, 65 automated tests. It is built for Muse Wonder and Muse Spark; this
   recording used a scripted model. Evidence first, humans in charge."
 
 ## After recording (Plan A)

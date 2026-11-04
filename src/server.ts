@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { gated, loginBlocked, recordLoginFailure, reserveRun, runsLeft, verifyToken, type AccessClaims } from './access.ts';
 import { investigate, RUNS_DIR } from './agent.ts';
 import { activeFaults, clearFaults, setOutage } from './chaos.ts';
+import { ledger } from './evolution/ledger.ts';
 import { decide, GovernanceError, killSwitch, listChanges, POLICY, setKillSwitch } from './governance/changes.ts';
 import { constitutionStatus } from './guard/constitution.ts';
 import { injectBadSkillEdit, runDoctor, seedRegression } from './heal/doctor.ts';
@@ -167,6 +168,10 @@ export function createApp(): Server {
         const v = Number(url.searchParams.get('v')) || undefined;
         const against = Number(url.searchParams.get('diff')) || undefined;
         return json(res, 200, { name: parts[2], content: reg.content(parts[2], v), diff: against ? lineDiff(reg.content(parts[2], against), reg.content(parts[2], v)) : null });
+      }
+      if (route === 'evolution') {
+        const log = ledger();
+        return json(res, 200, { verify: await log.verify(), entries: (await log.entries()).slice(-30).reverse() });
       }
       if (route === 'audit') {
         const reg = await getRegistry();

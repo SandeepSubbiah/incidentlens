@@ -1,5 +1,6 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { recordOpportunities } from './evolution/ledger.ts';
 import { loadConstitution } from './guard/constitution.ts';
 import { listArtifacts, loadGroundTruth, loadMeta, type IncidentMeta } from './incidents.ts';
 import { MODELS, Usage, WIRE } from './llm.ts';
@@ -153,4 +154,5 @@ export async function saveRun(incidentId: string, events: AgentEvent[]) {
   await mkdir(dir, { recursive: true });
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
   await writeFile(path.join(dir, `${stamp}.json`), JSON.stringify({ model: MODELS.deep, wire: WIRE, events }, null, 2));
+  await recordOpportunities(incidentId, `${stamp}.json`, events);
 }

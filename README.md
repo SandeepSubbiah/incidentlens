@@ -8,7 +8,7 @@ agrees on a root cause. Nothing an agent claims is taken on trust: every quote i
 the source, every patch is applied to an isolated copy, and every change, including changes
 IncidentLens makes to itself, goes through a governance gate that the AI cannot approve or bypass.
 
-> **Status, 2026-11-04.** Every feature below is implemented and covered by 60 automated tests
+> **Status, 2026-11-04.** Every feature below is implemented and covered by 65 automated tests
 > (CI on every push), which use a scripted stand-in model. **First live Muse evaluation,
 > 2026-11-04**, on `muse-wonder-1.0` and `muse-spark-1.3`, one run per incident:
 > - Solo mode found the root cause in 5 of 5 incidents, War Room mode in 5 of 5.
@@ -47,6 +47,11 @@ IncidentLens makes to itself, goes through a governance gate that the AI cannot 
    wait for human approval. Approved versions go live on the next run with no restart. The
    Doctor can only change skills (prompts and runbooks), never its constitution, verifier,
    policies, tools, scoring or code.
+6. **Keeps working when a model fails.** If Muse Wonder fails, calls fail over to Muse Spark and a
+   circuit breaker routes around Wonder until it recovers. The report names the model that
+   actually answered, and each failover or quarantined injection becomes a hash-chained Evolution
+   Ledger entry that proposes an improvement. Shown live with an injected outage:
+   [docs/CONTINUITY_DEMO.md](docs/CONTINUITY_DEMO.md).
 
 IncidentLens improves the system around Muse (skills, retrieval, routing, verification). It does
 not change Muse's model weights.
@@ -56,7 +61,7 @@ not change Muse's model weights.
 Requires Node 24 or newer. There are no runtime dependencies to install.
 
 ```powershell
-npm test                 # 60 tests: verifier, War Room, governance, self-repair, access, guards, security
+npm test                 # 65 tests: verifier, War Room, governance, self-repair, access, guards, security, continuity
 npm run demo:offline     # full UI with a scripted model (no API key; inc-001 only), http://localhost:5173
 npm start                # live, with Muse: needs MODEL_API_KEY and working Meta billing
 npm run eval             # score solo mode on all incidents (add --warroom for War Room mode)

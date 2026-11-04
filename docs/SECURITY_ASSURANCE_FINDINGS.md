@@ -1,7 +1,7 @@
 # Security assurance findings
 
 The first evidence-based security pass over IncidentLens, run on 2026-11-04 between 11:38 and
-13:00 ET. It follows the Sentinel security assurance execution prompt of the same date: §1 audit,
+12:00 ET. It follows the Sentinel security assurance execution prompt of the same date: §1 audit,
 §12 pre-deadline slice. That prompt is not in this repository.
 
 **What this pass is.** It audits this repository's own code and runs 21 deterministic scenarios
@@ -80,9 +80,9 @@ ERROR, and asks for TAP output explicitly.
 **Live verification after the fixes:**
 - **Plan B walkthrough in Chrome:** 19 of 19 checks pass. Real browser requests carry
   `Sec-Fetch-Site: same-origin`, and the new guard lets them through.
-- **One live solo run on Muse through the browser** (inc-001, 16:53 UTC): correct, $0.43.
+- **One live solo run on Muse through the browser** (inc-001, 11:53 ET): correct, $0.43.
   - Its record now carries `served: "muse-wonder-1.0"`, the model name Meta's API reported.
-  - This is the first run record with that evidence. Records before 2026-11-04 13:00 ET show only
+  - This is the first run record with that evidence. Records before 2026-11-04 11:53 ET show only
     the configured name.
 
 ## Findings
@@ -147,6 +147,16 @@ Medium for provenance.
   - Error events now carry `usage` (cost and per-model calls).
 - **Verified:** two tests; B09a and B09b; one live Muse run whose record shows
   `served: "muse-wonder-1.0"`.
+
+**SF-13 — A dropped connection on the fallback model ended the run.** Medium.
+- **How found:** during the live continuity demo, after a successful failover, one
+  `muse-spark-1.3` call failed with `fetch failed` and the run stopped.
+- **Cause:** connection errors before any response were never retried, and on the backup there
+  is nothing left to fail over to.
+- **Fix:** one visible resend after 300 ms; timeouts are not resent; the error keeps its cause
+  code.
+- **Verified:** socket-cut tests in `test/continuity-demo.test.ts`, and a live rerun. See
+  CONTINUITY_DEMO.md.
 
 ### Open: confirmed, deliberately not fixed before the deadline
 
@@ -229,13 +239,13 @@ From the execution prompt's catalog, with the reason each is untested:
 
 | Record | Location | What it proves | Gap |
 |---|---|---|---|
-| Run records | `runs/<incident>/*.json`; the committed live set is in `eval/live-2026-11-04/` | Every tool call, fact, rejection (now in full), requested and served model (from 13:00 ET), cost (now also for failed runs) | Not signed; an edited record replays as if real |
+| Run records | `runs/<incident>/*.json`; the committed live set is in `eval/live-2026-11-04/` | Every tool call, fact, rejection (now in full), requested and served model (from 11:53 ET), cost (now also for failed runs) | Not signed; an edited record replays as if real |
 | Governance ledger | `data/governance/changes.json` | Each request's hash, risk, decisions with actor, role, reason and hash | Single process, local file (issue #1) |
 | Audit log | `data/audit.jsonl` | Hash chain of self-changes and executions | Tail truncation undetected (SF-09) |
 | Access usage | `data/access-usage.json` | Runs spent per code | No revocation |
 | Evaluation | `eval/latest*.json` | Scores, citation counts, per incident | Keyword scoring (SF-12) |
 | Security pack | `eval/sentinel/smoke-latest.json` | Commit, dirty flag, Node version, every scenario's result and observation | Offline and deterministic only |
-| Tests | CI on every push | 60 tests | No live model in CI |
+| Tests | CI on every push | 65 tests | No live model in CI |
 
 **Not recorded at all:**
 - HTTP access, so who read what is unknown;
