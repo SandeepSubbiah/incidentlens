@@ -15,7 +15,9 @@ scripted. Never describe Plan B output as Muse output.
 
 **0:00–0:15 — The problem.** Home screen, incident list.
 > "When production breaks, AI can read every log in seconds. The hard parts are trusting what it
-> says, and controlling what it is allowed to change. IncidentLens does both, on Meta Muse."
+> says, and controlling what it is allowed to change. IncidentLens does both."
+- **Plan A** adds: "…and every agent you'll see is running on Meta Muse."
+- **Plan B** does not mention Muse as running here; go straight to the disclaimer below.
 
 **Plan B only — say this here, and keep the top bar visible:**
 > "Our Meta API billing isn't active yet, so this recording uses a scripted stand-in model. It is
@@ -34,7 +36,8 @@ scripted. Never describe Plan B output as Muse output.
 - Point at **"Conclusion blocked: skeptic review required"**, then the Skeptic's **stands**
   verdict: GC pauses are 18 ms, a red herring.
 - In the report, click a verified fact. The source panel highlights the exact line.
-  > "Every citation is checked against the file."
+  > "Every citation is checked against the file. That proves the quote is real, not that the
+  > conclusion is right: the Skeptic challenges the reasoning, and a human approves the fix."
 
 **1:30–2:00 — Go / No-Go.** Scroll to **Proposed fix**.
 - Point at **Lines found in source** and **Applied to isolated copy**:

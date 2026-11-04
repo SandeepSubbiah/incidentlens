@@ -12,14 +12,14 @@ generic. Pick the version that fits each field's length.
 Evidence-first incident investigation with governed self-repair, built on Meta Muse.
 
 ## One sentence
-A team of Muse agents investigates production incidents, refuses any claim it cannot verify in
-the source, proves its fix applies, and cannot change anything (including itself) without
+A team of Muse agents investigates production incidents, refuses any quoted evidence it cannot
+find in the source, shows its fix applies to an isolated copy, and cannot change anything (including itself) without
 hash-bound human approval.
 
 ## Short description (about 100 words)
 IncidentLens investigates incidents in Java/Spring Boot services on Kubernetes. A Muse Wonder
 commander leads Muse Spark specialists through logs, traces, config and code, with a skeptic
-that must try to disprove the leading theory before anyone concludes. Every fact is checked
+that must try to disprove the leading theory before anyone concludes. Every quoted fact is checked
 against the source before other agents can see it, and every fix is applied to an isolated copy
 and filed as a risk-classed change request that needs distinct human approvers. IncidentLens
 also watches its own quality: when it degrades, it investigates itself, proposes a rollback or a
@@ -28,7 +28,8 @@ minimal skill change, validates it, and waits for approval.
 ## What problem does it solve?
 AI can read every log during an outage, but on-call engineers can't act on an answer they can't
 check, and they can't let an agent change production on its own judgement. IncidentLens makes
-the AI's work checkable (verified citations, patches that are proven to apply) and its authority
+the AI's work checkable (citations located in the source, patches shown to apply to an isolated
+copy) and its authority
 explicit (approvals bound to the exact change, veto, expiry, kill switch).
 
 ## How we used Meta's models
@@ -57,6 +58,9 @@ explicit (approvals bound to the exact change, veto, expiry, kill switch).
   governance, self-repair, retrieval, access control and the guards.
 - **Live Muse runs: not yet recorded.** The Meta Model API returns `402 billing_not_configured`
   for this account. _Update this line if billing is fixed and a live run is recorded._
+- A verified citation proves the quoted text exists at the cited lines. It does not prove the conclusion drawn from it. Causal conclusions are
+  judged by the Skeptic agent, by scoring against hidden answer keys in evaluation, and by the
+  humans who approve the fix. Claim-level verification is planned (issue #6).
 - Remediation execution is simulated by design: patches are applied to an isolated copy, never
   to a real system.
 - The offline demo uses a scripted model labelled "not Muse". The self-repair demo uses seeded

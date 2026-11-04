@@ -22,10 +22,12 @@ IncidentLens makes to itself, goes through a governance gate that the AI cannot 
    `muse-spark-1.3` (fast), and a Fixer. They share a board, ask each other for help, and work
    to priorities. A live update ("duplicate charges still happening") pauses lower-priority work
    so the team mitigates first, the way an incident commander would.
-2. **Refuses unverified claims.** Facts enter the shared board only if their quote is found in
+2. **Refuses quotes it cannot find.** Facts enter the shared board only if their quote is found in
    the cited file at the cited lines, so one agent's hallucination cannot become another agent's
    premise. The Commander cannot conclude until the Skeptic has tried to disprove the leading
-   hypothesis.
+   hypothesis. A verified citation proves the quote is real, not that the conclusion is right:
+   causal reasoning is judged by the Skeptic, by the hidden-answer-key score in evaluation, and by
+   the humans approving the fix. Claim-level verification is issue #6.
 3. **Proves the fix applies.** The proposed unified diff is applied to an isolated in-memory
    copy of the file. The evidence on disk is never written.
 4. **Governs every change.** Each fix becomes a change request bound to the SHA-256 of the
@@ -121,6 +123,7 @@ cannot read (enforced and tested).
 
 ## Limits, stated plainly
 
+- A verified citation proves the quoted text exists at the cited lines. It does not prove the conclusion drawn from it.
 - Live Muse behaviour (diagnosis quality, tool-call compatibility, cost) is unverified until
   billing works.
 - Remediation execution is simulated. Patches are applied to an isolated copy, but not compiled
