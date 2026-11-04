@@ -33,9 +33,10 @@ test('already-committed request invokes no endpoint regardless of safeToRetry', 
 test('per-attempt timeout fails over and late completion is ignored', async () => {
   let late = false;
   const r = new ContinuityRouter([endpoint('a', async () => { await delay(120); late = true; return 'late'; }), endpoint('b', async () => 'backup')], () => {}, () => Date.now(), 2, 30000, { perAttemptTimeoutMs: 20, overallTimeoutMs: 500 });
-  const started = Date.now();
   const res = await r.execute(scope());
-  assert.equal(res.value, 'backup'); assert.ok(Date.now() - started < 100, 'elapsed');
+  // Ordering, not wall clock: the 20 ms deadline fires before the 120 ms endpoint finishes, so the
+  // backup's answer must arrive first, however loaded the machine is.
+  assert.equal(res.value, 'backup'); assert.equal(late, false, 'returned before the slow endpoint finished');
   await delay(150); assert.equal(late, true);
 });
 test('endpoint ignoring AbortSignal and never settling still times out', async () => {
