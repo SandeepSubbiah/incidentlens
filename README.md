@@ -1,77 +1,139 @@
 # IncidentLens
 
-An incident-investigation agent for Java/Spring Boot services on Kubernetes, built on Meta's
-**Muse** models through the Meta Model API.
+**Evidence-first incident investigation with governed self-repair, built on Meta Muse.**
 
-Given an alert, the agent investigates the incident's evidence (logs, traces, Kubernetes state,
-config, source code, recent changes) through tool calls. It then submits a structured diagnosis
-with a root cause, cited evidence, ruled-out hypotheses, a patch and a regression test.
+IncidentLens investigates production incidents in Java/Spring Boot services on Kubernetes. A team
+of Muse agents reads the logs, traces, Kubernetes state, config, code and recent changes, and
+agrees on a root cause. Nothing an agent claims is taken on trust: every quote is checked against
+the source, every patch is applied to an isolated copy, and every change, including changes
+IncidentLens makes to itself, goes through a governance gate that the AI cannot approve or bypass.
 
-What sets it apart from asking a chatbot is that **nothing the model says is taken on trust**:
+> **Status, 2026-11-04.** Every feature below is implemented and covered by 47 automated tests
+> (CI on every push). **No live Muse run has been recorded yet:** the Meta Model API returns
+> `HTTP 402 billing_not_configured` for this account. The tests and the offline demo use a
+> scripted stand-in model, labelled as such in the UI. See
+> [docs/IMPLEMENTATION_GAP_MATRIX.md](docs/IMPLEMENTATION_GAP_MATRIX.md) for exactly what is
+> verified, simulated, partial or missing.
 
-- **Citation verification.** Every evidence quote is checked against the cited file and lines.
-  Fabricated quotes are flagged `Not in source`, and quotes with wrong line numbers are flagged
-  `Wrong lines`.
-- **Patch verification.** Lines the patch removes, and the context it quotes, must exist in the
-  target file.
-- **Self-correction.** If verification fails, the specific failures go back to the agent, which
-  gets one revision. The UI shows the rejection and the revised result.
-- **Scored eval.** Each incident has a hidden answer key that the agent's tools cannot read
-  (enforced and tested). `npm run eval` scores the root cause with deterministic keyword groups,
-  not an LLM judge.
-- **Red herrings.** Every incident contains plausible but wrong signals (GC pauses, noisy 404s,
-  slow-query warnings, an unrelated config bump), so the agent cannot just report the loudest error.
+## What it does
 
-## Incidents
+1. **Investigates.** Solo mode runs one agent. War Room mode runs six: a Commander and a Skeptic
+   on `muse-wonder-1.0` (deep reasoning), Signals, Platform and Code specialists on
+   `muse-spark-1.3` (fast), and a Fixer. They share a board, ask each other for help, and work
+   to priorities. A live update ("duplicate charges still happening") pauses lower-priority work
+   so the team mitigates first, the way an incident commander would.
+2. **Refuses unverified claims.** Facts enter the shared board only if their quote is found in
+   the cited file at the cited lines, so one agent's hallucination cannot become another agent's
+   premise. The Commander cannot conclude until the Skeptic has tried to disprove the leading
+   hypothesis.
+3. **Proves the fix applies.** The proposed unified diff is applied to an isolated in-memory
+   copy of the file. The evidence on disk is never written.
+4. **Governs every change.** Each fix becomes a change request bound to the SHA-256 of the
+   exact change and classified by risk. A production code change (A3) needs two different human
+   approvers, a veto or expiry always wins, the requester can never approve its own change, and
+   a kill switch stops everything except rollbacks. Execution of production changes is simulated.
+5. **Repairs itself, within limits.** IncidentLens measures its own investigations. When an
+   indicator breaches its objective, a Doctor agent investigates IncidentLens with the same
+   evidence rules, and proposes a rollback or a minimal skill patch. Patches pass a policy guard,
+   are validated on canary incidents scored against answer keys the Doctor cannot read, and then
+   wait for human approval. Approved versions go live on the next run with no restart. The
+   Doctor can only change skills (prompts and runbooks), never its constitution, verifier,
+   policies, tools, scoring or code.
 
-| Incident | Real cause | Distractors |
-|---|---|---|
-| Checkout 5xx, p99 > 30s | Fraud HTTP call moved inside `@Transactional` → Hikari pool exhaustion | GC pauses, readiness failure, HPA scale-up |
-| Pods restarting | Memory limit cut to 1024Mi while `-Xmx1024m` hard-coded → kernel OOMKill | Slow-query warnings, statement batch job |
-| Customers charged twice | Retry on read timeout for a non-idempotent `POST /v1/charges` with no idempotency key | Ledger sync lag, batch-size change |
-| Inventory oversold | Producer added `loyaltyTier`; consumer's own `ObjectMapper` fails on unknown properties → DLT | ERP sync slowness, retention change |
-| Intermittent 503s | Readiness probe hits aggregate `/actuator/health` (incl. Redis) with 1s timeout during Redis migration | Hundreds of recommendation-widget 404s |
-
-All incidents are synthetic, written to resemble real Spring Boot / Kubernetes failure modes.
+IncidentLens improves the system around Muse (skills, retrieval, routing, verification). It does
+not change Muse's model weights.
 
 ## Run it
 
-Requires Node 24+ (TypeScript runs directly; no build step, no dependencies).
+Requires Node 24 or newer. There are no runtime dependencies to install.
 
 ```powershell
-$env:MODEL_API_KEY = "<your key>"     # or set it once with: setx MODEL_API_KEY "<key>"
-npm start                              # http://localhost:5173
-npm run eval                           # score the agent on all incidents
-npm run eval -- inc-003-duplicate-charges   # one incident
-npm test                               # verifier, sandbox, scoring, and agent-loop tests
+npm test                 # 47 tests: verifier, War Room, governance, self-repair, access, guards
+npm run demo:offline     # full UI with a scripted model (no API key; inc-001 only), http://localhost:5173
+npm start                # live, with Muse: needs MODEL_API_KEY and working Meta billing
+npm run eval             # score solo mode on all incidents (add --warroom for War Room mode)
 ```
+
+The offline demo is labelled `scripted-... (offline demo, not Muse)` everywhere it appears, and
+keeps its state in `data-offline-demo/` and `runs-offline-demo/`.
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `MODEL` | `muse-wonder-1.0` | Any model id from `GET /v1/models`, e.g. `muse-spark-1.3` |
-| `LLM_WIRE` | `responses` | `responses` (OpenAI-style) or `messages` (Anthropic-style); both are served by the Meta Model API |
-| `PORT` | `5173` | |
+| `MODEL_API_KEY` | | Meta Model API key. Never logged, never written to disk. |
+| `MODEL_DEEP` / `MODEL_FAST` | `muse-wonder-1.0` / `muse-spark-1.3` | Model per tier |
+| `LLM_WIRE` | `responses` | `responses` or `messages` (both served by the Meta Model API) |
+| `REASONING_DEEP` / `REASONING_FAST` | `high` / `low` | Reasoning effort; `off` disables. Dropped automatically if the endpoint rejects it |
+| `WARROOM_CONCURRENCY` | `3` | Agents working in parallel |
+| `WARROOM_MAX_COST_USD` | `3` | Per-investigation budget; when reached, the Commander must conclude |
+| `ACCESS_SECRET` | | 32+ characters. Turns on access codes for live runs |
+| `HOST` | `127.0.0.1` without a secret | The server refuses to listen beyond loopback without `ACCESS_SECRET` unless `INCIDENTLENS_DEV_OPEN=1` |
 
-Every investigation is recorded under `runs/`. The UI can replay the latest recorded run, clearly
-labelled with its model and time, for demos without network access.
+Access codes for a hosted demo: `ACCESS_SECRET=... npm run mint-token -- --name judge-1 --days 7 --runs 20`
+(add `--role admin` for self-repair, fault injection and approvals). Recorded runs and read-only
+views stay public. Live investigations need a code and count against its run budget.
 
 ## How it works
 
-```
-alert ──► agent loop (src/agent.ts) ──► Meta Model API (src/llm.ts)
-              │   ▲
-   tool calls │   │ results               list_artifacts / read_artifact / search_artifacts
-              ▼   │                       sandboxed to the incident; answer key hidden (src/incidents.ts, src/tools.ts)
-          submit_report
-              │
-              ▼
-   verify citations + patch (src/verify.ts) ── fail ──► feedback to agent, one revision
-              │ pass
-              ▼
-   score vs hidden answer key (src/score.ts) ──► SSE stream to UI (src/server.ts, public/)
+```mermaid
+flowchart LR
+  E[Evidence files] --> A[Muse agents<br/>solo or War Room]
+  KB[(Runbooks + past cases<br/>BM25)] --> A
+  SK[(Versioned skills)] --> A
+  C[Constitution<br/>SHA-256 pinned in code] --> A
+  A -->|post_fact| V{Citation verifier}
+  V -->|rejected| A
+  V -->|verified| B[(Shared board)]
+  B --> R[Conclusion + fix]
+  R --> S[Apply patch to<br/>isolated copy]
+  S --> CR[Change request<br/>hash-bound, risk A0-A4]
+  CR --> G{Governance gate}
+  G -->|approved| X[Execute once<br/>simulated for production]
+  G -->|veto, expiry, kill switch| N[No-Go]
+  H[Health indicators<br/>from run records] --> D[Doctor investigates<br/>a self-case]
+  D --> P[Policy guard] --> VAL[Canary validation] --> CR
+  CR -.audit.-> AU[(Hash-chained audit log)]
 ```
 
-The tests (`test/`) include positive controls. A fabricated quote must be rejected, a patch with
-invented lines must mismatch, and a red-herring diagnosis must score as wrong. The agent loop is
-tested end to end on both wire formats against a scripted model server that submits a fabricated
-citation first.
+| Module | Responsibility |
+|---|---|
+| `src/llm.ts` | Muse client: Responses and Messages wires, fast/deep tiers, circuit breakers, failover, Retry-After, parameter negotiation, cost metering |
+| `src/agent.ts`, `src/loop.ts` | Solo investigator and the shared tool loop |
+| `src/warroom/` | Shared board, role tools, priority scheduler with pause and resume |
+| `src/verify.ts`, `src/sandbox.ts` | Citation verification, patch line check, patch application to an isolated copy |
+| `src/governance/changes.ts` | Change requests, approval precedence, veto, expiry, kill switch, execution |
+| `src/heal/` | Health indicators, self-case builder, Doctor, deterministic rollback rule, seeded regression |
+| `src/skills/` | Versioned skill registry and BM25 retrieval |
+| `src/guard/` | Constitution pin, policy guard for self-changes, injection quarantine, audit log |
+| `src/access.ts`, `src/server.ts` | Access codes, roles, budgets, HTTP API and security headers |
+
+## Incidents
+
+Five synthetic incidents, each with red herrings and a hidden answer key that the agents' tools
+cannot read (enforced and tested).
+
+| Incident | Real cause | Distractors |
+|---|---|---|
+| Checkout 5xx, p99 above 30s | Fraud HTTP call moved inside `@Transactional`, exhausting the Hikari pool | GC pauses, readiness failure, autoscaling |
+| Pods restarting | Memory limit cut to 1024Mi while `-Xmx1024m` stayed, so the kernel OOM-kills the JVM | Slow-query warnings, batch job |
+| Customers charged twice | Retry on read timeout for a non-idempotent `POST /v1/charges` with no idempotency key | Ledger lag, batch-size change |
+| Inventory oversold | Producer added `loyaltyTier`; the consumer's own `ObjectMapper` rejects unknown fields | ERP sync slowness, retention change |
+| Intermittent 503s | Readiness probe on aggregate `/actuator/health` (includes Redis) with a 1s timeout, during a Redis migration | Hundreds of harmless 404s, a planted prompt injection in the logs |
+
+## Limits, stated plainly
+
+- Live Muse behaviour (diagnosis quality, tool-call compatibility, cost) is unverified until
+  billing works.
+- Remediation execution is simulated. Patches are applied to an isolated copy, but not compiled
+  or tested.
+- Prompt-injection detection is a pattern-based alert, not a guarantee. Safety comes from the
+  agents having read-only tools and from the governance gate.
+- State lives in JSON files with atomic writes in a single process. There is no multi-instance
+  locking, and access codes cannot yet be revoked.
+- Retrieval is lexical (BM25). The Meta Model API has no embeddings endpoint.
+
+More: [architecture decisions](docs/DECISION_LOG.md), [threat model](docs/THREAT_MODEL.md),
+[roadmap](docs/ROADMAP.md), [demo script](docs/DEMO_SCRIPT_3_MIN.md).
+
+## License
+
+[MIT](LICENSE)
