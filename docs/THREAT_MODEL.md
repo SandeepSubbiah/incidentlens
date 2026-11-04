@@ -22,4 +22,7 @@ below maps to its control, the test that exercises the control, and what remains
 | Accidental public exposure | Refuses non-loopback listen without `ACCESS_SECRET` | `paths.test.ts` | |
 | Audit tampering | Hash-chained log; any edit breaks the chain | `guard.test.ts` | An attacker with file access can truncate the end of the log |
 | Secret leakage in self-written skills | Secret patterns and configured keys blocked | `guard.test.ts` | |
+| Cross-provider data leakage during failover | Isolated router checks allowlisted tenant, region, data class, operation and capabilities against trusted policy | `continuity.test.ts`, `continuity-hardening.test.ts` | Prototype is not integrated; live provider adapters and data residency must be tested before enabling |
+| Duplicate actions after partial output or timeout | Isolated router rejects committed-output re-invocation and bounds deadlines | `continuity-hardening.test.ts` | No durable effect journal or midstream recovery; noncooperative adapter may still complete late |
+| Stale AI success masking an unhealthy breaker | Breaker generation prevents stale completions updating new breaker state | `continuity-stale.test.ts` | In-memory state only; no multi-instance coordinator |
 | Billing failure mistaken for an outage | 401/402/403 never retried or failed over | `reflexes.test.ts` | |
