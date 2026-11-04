@@ -40,7 +40,7 @@ capability relates to that item. It does not mean the item is satisfied.
 | Calibration (Brier score, ECE) | Missing | No trusted labels at scale |
 | Focus governor and drift detection (S24, S25) | Partial | Per-task turn budgets, nudges, global turn, cost and time budgets with forced conclusion; no drift detection or checkpoint and replan |
 | Metrics with denominators and intervals | Partial | Health shows n and enforces a minimum of 5 runs; no intervals |
-| Live hallucination rates | Partial | The verifier refused 5 of 160 posted facts in 6 live War Room runs (3 misquotes, 2 quotes cut short with "…"). No rate study, no claim-level check |
+| Live hallucination rates | Partial | The verifier refused 5 of 160 posted facts in 6 live War Room runs (3 misquotes; 2 longer quotes whose cause the record cannot show, because it kept only 200 characters). No rate study, no claim-level check |
 
 ## 3. Prompt injection, RAG poisoning, memory poisoning and tool misuse
 

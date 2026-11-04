@@ -481,7 +481,8 @@ export async function runWarRoom(incidentId: string, emit: Emit, opts: WarRoomOp
     if (score.correct && checks.every((x) => x.status === 'verified') && !view.overridden.length) await learnCase(meta, report);
   } catch (err: any) {
     closed = true;
-    send({ type: 'error', message: err.message });
+    // Spend and the models that actually answered are recorded even when the run fails.
+    send({ type: 'error', message: err.message, usage: { cost_usd: usage.cost, models: usage.byModel } });
   } finally {
     if (opts.record !== false) await saveRun(incidentId, events).catch(() => {});
   }

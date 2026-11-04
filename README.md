@@ -8,7 +8,7 @@ agrees on a root cause. Nothing an agent claims is taken on trust: every quote i
 the source, every patch is applied to an isolated copy, and every change, including changes
 IncidentLens makes to itself, goes through a governance gate that the AI cannot approve or bypass.
 
-> **Status, 2026-11-04.** Every feature below is implemented and covered by 53 automated tests
+> **Status, 2026-11-04.** Every feature below is implemented and covered by 60 automated tests
 > (CI on every push), which use a scripted stand-in model. **First live Muse evaluation,
 > 2026-11-04**, on `muse-wonder-1.0` and `muse-spark-1.3`, one run per incident:
 > - Solo mode found the root cause in 5 of 5 incidents, War Room mode in 5 of 5.
@@ -56,10 +56,11 @@ not change Muse's model weights.
 Requires Node 24 or newer. There are no runtime dependencies to install.
 
 ```powershell
-npm test                 # 53 tests: verifier, War Room, governance, self-repair, access, guards
+npm test                 # 60 tests: verifier, War Room, governance, self-repair, access, guards, security
 npm run demo:offline     # full UI with a scripted model (no API key; inc-001 only), http://localhost:5173
 npm start                # live, with Muse: needs MODEL_API_KEY and working Meta billing
 npm run eval             # score solo mode on all incidents (add --warroom for War Room mode)
+npm run sentinel:smoke   # 21 offline security scenarios; exits 1 while findings are open (docs/SECURITY_ASSURANCE_FINDINGS.md)
 ```
 
 The offline demo is labelled `scripted-... (offline demo, not Muse)` everywhere it appears, and

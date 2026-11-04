@@ -5,7 +5,7 @@ What is measured today, how, and what is not yet measured. The first live Muse r
 
 ## Layer 1 — Deterministic tests (implemented, run in CI)
 
-`npm test` runs 53 tests with no network access and no API key. Models are scripted stand-ins,
+`npm test` runs 60 tests with no network access and no API key. Models are scripted stand-ins,
 so these tests measure IncidentLens's own machinery, not model quality.
 
 | Area | Test file | Includes negative controls |
@@ -99,7 +99,12 @@ and no compatibility reflex fired: no parameter negotiation, history repair, ret
   the verifier refused 5 of 160 posted facts:
   - Three were real misquotes: a deploy diff quoted without its `-` markers, and two Kubernetes
     events with the wrong age (`8m` for `2m`, `14m` for `13m`).
-  - Two were exact quotes that ended in an ellipsis (`…`), which an exact-match check refuses.
+  - Two were quotes longer than 200 characters. The run record kept only the first 200, ending
+    in `…`. Those characters match the file, so the mismatch was in the part that was not kept,
+    and its cause cannot be recovered. (An earlier version of this page wrongly said the model
+    had ended these quotes with an ellipsis; the `…` was added by IncidentLens's recorder.
+    Records now keep the whole quote: finding SF-05 in
+    [SECURITY_ASSURANCE_FINDINGS.md](SECURITY_ASSURANCE_FINDINGS.md).)
 
   None reached the shared board, and every citation in the final reports verified.
 - **Self-correction in solo mode.** In a live solo run through the UI (10:29 ET), the verifier
