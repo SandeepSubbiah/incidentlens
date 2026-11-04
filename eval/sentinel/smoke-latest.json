@@ -1,9 +1,9 @@
 {
   "pack": "sentinel-smoke",
   "version": 1,
-  "at": "2026-11-04T16:50:22.583Z",
-  "commit": "755ec4d",
-  "dirty": true,
+  "at": "2026-11-04T16:56:45.372Z",
+  "commit": "0eab270",
+  "dirty": false,
   "node": "v24.18.0",
   "environment": "isolated-fixture: temp dirs, local scripted model, synthetic key; no network beyond 127.0.0.1",
   "live_inference": false,
