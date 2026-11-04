@@ -18,14 +18,19 @@ not appear in your run, skip it rather than describe it.
    git pull --ff-only
    npm test                        # expect 106 of 106
    $env:MODEL_API_KEY = [Environment]::GetEnvironmentVariable("MODEL_API_KEY", "User")
+   $env:CREDIT_BUDGET_USD = "150"     # optional: shows estimated remaining credit in the top bar
    npm start
    ```
    The terminal must print `(deep muse-wonder-1.0, fast muse-spark-1.3, responses API, open access)`.
-   If it says `MODEL_API_KEY NOT SET`, the window is too old; open another.
-2. **Rehearsal run (required).** Open `http://localhost:5173`, select inc-001, choose
-   **War Room · 6 agents**, click **Investigate**. It takes about 3–4 minutes and costs about
-   $0.70–0.85. This run becomes the one **Replay recorded run** plays back, and its change request
-   is the one the Go / No-Go card shows. So:
+   If it says `MODEL_API_KEY NOT SET`, the window is too old; open another. In the browser, the top
+   bar must end in **live Meta API**, next to the spend chip ("Today $… · est. $… of $150.00 left").
+2. **Rehearsal run (required).** Open `http://localhost:5173`, select inc-001 (the first incident,
+   "Checkout failing with 5xx, p99 latency above 30s"), choose **War Room · 6 agents**, click
+   **Investigate**. It takes about 3–4 minutes and costs about $0.70–0.85; the running cost shows
+   next to the button. You can look at other pages meanwhile: the incident list marks the run
+   "live run", and returning to inc-001 reconnects to it. Do not reload the page, which drops the
+   view (the run still finishes on the server). This run becomes the one **Replay recorded run**
+   plays back, and its change request is the one the Go / No-Go card shows. So:
    - Do **not** click Approve or Veto during the rehearsal.
    - Record within **2 hours** of it. A3 change requests expire after 120 minutes, and Approve
      would then be refused with **R3: approval window expired**. If that happens, run another
@@ -34,6 +39,7 @@ not appear in your run, skip it rather than describe it.
    - Is there a **Fact rejected** line? Note the reason it gives.
    - Is there a **paused … for …** line after the live update?
    - What is the Skeptic's verdict (**Review of H1: stands** or another)?
+   - At the end: the report's cost and its **Answered by** line, so you quote real numbers.
 4. Browser window about 1440×900 at 100–110% zoom. Keep inc-001 selected.
 
 **Plan B:** delete `data-offline-demo/` and `runs-offline-demo/`, then `npm run demo:offline`.
@@ -41,10 +47,12 @@ Plan B only scripts inc-001.
 
 ## Shot list
 
-**0:00–0:15 — The problem.** Home screen, incident list.
+**0:00–0:15 — The problem.** Home screen, incident list. Point at the top bar (**live Meta API**)
+and the **synthetic** label on the incidents.
 > "When production breaks, AI can read every log in seconds. The hard parts are trusting what it
 > says, and controlling what it is allowed to change. IncidentLens does both."
-- **Plan A** adds: "…and every agent you'll see is running on Meta Muse."
+- **Plan A** adds: "…and every agent you'll see is running on Meta Muse. These are test incidents
+  we wrote, so we can score the answers, and the app labels them that way."
 - **Plan B** does not mention Muse as running here; go straight to the disclaimer below.
 
 **Plan B only — say this here, and keep the top bar visible:**
@@ -54,9 +62,10 @@ Plan B only scripts inc-001.
 
 **0:15–1:00 — The War Room.** Select inc-001, choose **War Room · 6 agents**.
 - **Plan A:** click **Replay recorded run**. The banner reads "Replay of a recorded run
-  (muse-wonder-1.0) from …". Say:
+  (muse-wonder-1.0) from …" and ends with **SYNTHETIC INCIDENT** and **LIVE MUSE**. Check that its
+  time is your rehearsal's. Say, with your rehearsal's real numbers:
   > "This is a live Muse investigation we ran a few minutes ago, replayed at speed. The real run
-  > took about three and a half minutes and cost under a dollar."
+  > took about three minutes and cost about seventy cents."
 
   Alternative: click **Investigate** and record the whole live run, then shorten the wait in
   editing with an on-screen caption such as "live run, shortened".
@@ -84,6 +93,10 @@ Plan B only scripts inc-001.
 - In the report, click a verified fact. The source panel highlights the exact line.
   > "Every citation is checked against the file. That proves the quote is real, not that the
   > conclusion is right: the Skeptic challenges the reasoning, and a human approves the fix."
+- Point at the report's facts line: the cost, **Answered by muse-wonder-1.0 ×…, muse-spark-1.3
+  ×…**, and the **SYNTHETIC INCIDENT · LIVE MUSE** labels. Each trail step also names its model.
+  > "Every run shows what it cost and which model actually answered each request, as reported
+  > by Meta's API."
 
 **1:30–2:00 — Go / No-Go.** Scroll to **Proposed fix**.
 - Point at **Lines found in source** and **Applied to isolated copy**:
@@ -109,10 +122,12 @@ Plan B only scripts inc-001.
   > "It can change only its skills, never its constitution or its grader, and every change is
   > audited."
 
-**2:45–3:00 — Close.**
+**2:45–3:00 — Close.** Open **Capabilities and roadmap** (left menu, or `/capabilities.html`).
+Optionally flash **Usage and cost** for a second first.
 - **Plan A:** "Open source, 106 automated tests. On live Muse, it diagnosed all five of our test
-  incidents correctly in solo mode, with every cited quote verified. Evidence first, humans in
-  charge." Only say this if the numbers in `docs/EVALUATION_PROTOCOL.md` still say so.
+  incidents correctly in solo mode, with every cited quote verified. And it says plainly what's
+  live, what's a prototype and what's still planned. Evidence first, humans in charge." Only say
+  this if the numbers in `docs/EVALUATION_PROTOCOL.md` still say so.
 - **Plan B:** "Open source, 106 automated tests. It is built for Muse Wonder and Muse Spark; this
   recording used a scripted model. Evidence first, humans in charge."
 
@@ -125,7 +140,7 @@ place is in place of part of the self-repair segment.
    > "We cut off Muse Wonder on purpose."
 2. Open inc-001, choose **Solo agent**, click **Investigate**. Cut to the result.
    - Point at the trail's **Reflex · Failover** and **Circuit opened** lines.
-   - Point at **Answered by muse-spark-1.3** in the report.
+   - Point at **Answered by muse-spark-1.3** and the **simulated fault** label in the report.
    > "Wonder is down, so the work moves to Spark, and the report names the model that actually
    > answered. The outage is simulated; Spark's answer is real."
 3. Back on the Health page, point at the **Evolution ledger** entry marked **simulated fault**.
@@ -148,4 +163,9 @@ Seeding a regression in live mode writes five synthetic run records into `runs/`
 
 ## If something goes wrong on camera
 
-Use **Replay recorded run**. It is labelled with its model and time.
+- **A live call fails:** use **Replay recorded run**. It is labelled with its model, time and
+  source.
+- **You left a live run's page:** click the incident again. It reconnects and shows the run so far.
+- **You reloaded the page mid-run:** the server still finishes it. Wait until about 4 minutes
+  after you started, then **Replay recorded run** and check the banner's time.
+- **Approve is refused with R3:** the rehearsal is more than 2 hours old. Run a new one.
