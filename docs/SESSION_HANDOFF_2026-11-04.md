@@ -1,5 +1,12 @@
 # Session handoff — 2026-11-04 ~00:50 ET
 
+> **Later release note (November 4, after 2:36 PM ET):** PR #22 is now merged.
+> Its separately tested provider-neutral router remains disconnected from live inference.
+> The final PR-head CI passed **103/103 tests**. The historical checkpoints, 402 billing
+> blocker and 53-test commands below describe earlier states, not today's baseline.
+> See [FEATURE_STATUS.md](FEATURE_STATUS.md) and [CONTINUITY_PROTOTYPE.md](CONTINUITY_PROTOTYPE.md).
+
+
 For whoever continues: a person, or Claude Code after the usage reset at 2:10 AM ET.
 
 > **Update, 10:50 ET.** Meta billing works: HTTP 200 on both models from 10:13 ET. The first
