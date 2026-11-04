@@ -112,6 +112,25 @@ Plan B only scripts inc-001.
 - **Plan B:** "Open source, 65 automated tests. It is built for Muse Wonder and Muse Spark; this
   recording used a scripted model. Evidence first, humans in charge."
 
+## Optional: continuity beat (Plan A, about 20 seconds)
+
+Use it only if you can shorten the live run in editing. It takes about 90 seconds live. A good
+place is in place of part of the self-repair segment.
+
+1. On the Health page, click **Simulate deep-model outage**.
+   > "We cut off Muse Wonder on purpose."
+2. Open inc-001, choose **Solo agent**, click **Investigate**. Cut to the result.
+   - Point at the trail's **Reflex · Failover** and **Circuit opened** lines.
+   - Point at **Answered by muse-spark-1.3** in the report.
+   > "Wonder is down, so the work moves to Spark, and the report names the model that actually
+   > answered. The outage is simulated; Spark's answer is real."
+3. Back on the Health page, point at the **Evolution ledger** entry marked **simulated fault**.
+   > "Every fault becomes a proposal linked to its evidence. It changes nothing on its own."
+4. Click **Clear faults**. Wait at least 60 seconds before anything that uses Wonder, including
+   **Run self-repair**. The circuit stays open until then and Wonder work would go to Spark.
+
+Do not say it is zero-downtime or that streaming resumes: neither is built.
+
 ## After recording (Plan A)
 
 Seeding a regression in live mode writes five synthetic run records into `runs/` and a bad
