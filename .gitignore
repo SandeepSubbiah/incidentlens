@@ -2,3 +2,5 @@ node_modules/
 runs/
 eval/results-*.json
 data/
+data-offline-demo/
+runs-offline-demo/

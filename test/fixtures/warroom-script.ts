@@ -1,5 +1,6 @@
 import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
+import { revisionScript } from '../fake-model.ts';
 
 // A scripted model that plays every War Room role on inc-001, used by the War Room test and the
 // browser check. The role is read from the system prompt; each role pops its next scripted turn.
@@ -76,7 +77,11 @@ export const SCRIPTS: Record<string, { name: string; args: any }[][]> = {
   ],
 };
 
+// The solo investigator's script: a fabricated citation first, then the corrected report.
+SCRIPTS.solo = revisionScript.map((call) => [call]);
+
 const HEADINGS: [string, string][] = [
+  ['# Solo investigator', 'solo'],
   ['# Incident commander', 'commander'],
   ['# Signals analyst', 'signals'],
   ['# Platform analyst', 'platform'],
@@ -85,7 +90,7 @@ const HEADINGS: [string, string][] = [
   ['# Fixer', 'fixer'],
 ];
 
-export async function startRoleFake(delayMs = 0, opts: { unknownRoleStatus?: number } = {}) {
+export async function startRoleFake(delayMs = 0, opts: { unknownRoleStatus?: number; onlyIncident?: string } = {}) {
   const requests: { role: string; model: string; body: any }[] = [];
   const cursor: Record<string, number> = {};
   let overflow = 0;
@@ -100,6 +105,13 @@ export async function startRoleFake(delayMs = 0, opts: { unknownRoleStatus?: num
       res.writeHead(opts.unknownRoleStatus, { 'content-type': 'application/json' });
       return res.end(JSON.stringify({ error: { message: 'scripted: no script for this role' } }));
     }
+    const history = body.input ?? body.messages ?? [];
+    if (opts.onlyIncident && !JSON.stringify(history).includes(opts.onlyIncident)) {
+      res.writeHead(422, { 'content-type': 'application/json' });
+      return res.end(JSON.stringify({ error: { message: `offline demo: the scripted model only covers ${opts.onlyIncident}` } }));
+    }
+    // A new session (one message so far) starts that role's script from the top.
+    if (history.length === 1) cursor[role] = -1;
     const i = (cursor[role] = (cursor[role] ?? -1) + 1);
     const turn = SCRIPTS[role]?.[i];
     if (!turn) overflow++;

@@ -7,7 +7,7 @@ import { investigate, RUNS_DIR } from './agent.ts';
 import { activeFaults, clearFaults, setOutage } from './chaos.ts';
 import { decide, GovernanceError, killSwitch, listChanges, POLICY, setKillSwitch } from './governance/changes.ts';
 import { constitutionStatus } from './guard/constitution.ts';
-import { injectBadSkillEdit, runDoctor } from './heal/doctor.ts';
+import { injectBadSkillEdit, runDoctor, seedRegression } from './heal/doctor.ts';
 import { health } from './heal/health.ts';
 import { listArtifacts, listIncidents, readArtifact } from './incidents.ts';
 import { MODELS, reflexState, WIRE } from './llm.ts';
@@ -195,11 +195,12 @@ export function createApp(): Server {
           return json(res, 200, { ok: true, faults: activeFaults() });
         }
         if (fault === 'bad-skill') return json(res, 200, { ok: true, ...(await injectBadSkillEdit()) });
+        if (fault === 'seed-regression') return json(res, 200, { ok: true, ...(await seedRegression()) });
         if (fault === 'clear') {
           clearFaults();
           return json(res, 200, { ok: true, faults: [] });
         }
-        return json(res, 400, { error: 'fault must be outage, bad-skill or clear' });
+        return json(res, 400, { error: 'fault must be outage, bad-skill, seed-regression or clear' });
       }
       return json(res, 404, { error: 'not found' });
     } catch (err: any) {

@@ -543,7 +543,8 @@ async function refreshHealth() {
   if (!h || !$('#health-body')) return;
   const breakers = Object.entries(h.reflexes.breakers ?? {});
   $('#health-body').innerHTML = `
-    <section class="card"><h2 class="section-title">Indicators · last ${h.window} runs</h2>
+    <section class="card"><h2 class="section-title">Indicators · last ${h.window} runs${h.synthetic_runs ? ` · ${h.synthetic_runs} synthetic (seeded)` : ''}</h2>
+      ${h.sufficient ? '' : `<p class="hint">Fewer than ${h.min_runs} runs: indicators are shown but never treated as a breach.</p>`}
       <table class="ind"><thead><tr><th>Indicator</th><th>Value</th><th>Objective</th><th>Status</th></tr></thead><tbody>
       ${h.slis.map((s) => `<tr><td>${esc(s.name.replace(/_/g, ' '))}</td><td class="num">${s.value ?? 'n/a'}</td><td class="num">${esc(s.objective)}</td><td><span class="stamp ${s.breached ? 'breached' : 'ok'}">${s.breached ? 'breached' : 'ok'}</span></td></tr>`).join('')}
       </tbody></table>
@@ -559,6 +560,7 @@ async function refreshHealth() {
         <button class="btn" id="heal-run" ${isAdmin() ? '' : 'disabled'}>Run self-repair</button>
         <button class="btn secondary small" data-chaos="outage" ${isAdmin() ? '' : 'disabled'}>Simulate deep-model outage</button>
         <button class="btn secondary small" data-chaos="bad-skill" ${isAdmin() ? '' : 'disabled'}>Push a bad skill edit</button>
+        <button class="btn secondary small" data-chaos="seed-regression" ${isAdmin() ? '' : 'disabled'}>Seed a regression (synthetic runs)</button>
         <button class="btn secondary small" data-chaos="clear" ${isAdmin() ? '' : 'disabled'}>Clear faults</button>
       </div>
       ${isAdmin() ? '' : '<p class="hint">Self-repair and fault injection need an admin access code.</p>'}
@@ -593,7 +595,7 @@ async function refreshHealth() {
 async function chaos(fault) {
   const res = await fetch('/api/chaos', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ fault, model: 'deep', seconds: 180 }) });
   const data = await res.json().catch(() => ({}));
-  $('#heal-log').insertAdjacentHTML('beforeend', `<li>${res.ok ? (fault === 'bad-skill' ? `Pushed a bad edit: ${esc(data.skill)} v${data.version} is now live` : fault === 'outage' ? 'Deep model outage simulated for 3 minutes' : 'Faults cleared') : esc(data.error)}</li>`);
+  $('#heal-log').insertAdjacentHTML('beforeend', `<li>${res.ok ? (fault === 'bad-skill' ? `Pushed a bad edit: ${esc(data.skill)} v${data.version} is now live` : fault === 'seed-regression' ? `Seeded: ${esc(data.skill)} v${data.version} is live and ${data.runs} synthetic failing runs were recorded` : fault === 'outage' ? 'Deep model outage simulated for 3 minutes' : 'Faults cleared') : esc(data.error)}</li>`);
   await refreshHealth();
 }
 

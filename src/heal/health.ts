@@ -19,6 +19,7 @@ export interface RunSummary {
   quarantined: number;
   cost_usd: number;
   versions: Record<string, number>;
+  synthetic: boolean;
   error?: string;
   missed?: string[];
 }
@@ -38,6 +39,7 @@ export interface Health {
   healthy: boolean;
   sufficient: boolean;
   min_runs: number;
+  synthetic_runs: number;
 }
 
 const WINDOW = 8;
@@ -71,6 +73,7 @@ export function summarizeRun(file: string, run: any): RunSummary {
     quarantined: events.filter((e) => e.type === 'quarantine').length,
     cost_usd: report?.stats?.cost_usd ?? 0,
     versions: start.skills?.versions ?? {},
+    synthetic: !!(run.synthetic || start.synthetic),
     error: error?.message,
     missed: report ? report.score.groups.filter((g: any) => !g.hit).map((g: any) => g.any.join('|')) : undefined,
   };
@@ -107,7 +110,7 @@ export function assess(runs: RunSummary[]): Health {
     slo('tool_error_rate', ratio(runs.reduce((n, r) => n + r.tool_errors, 0), calls), '<= 0.25', (v) => v > 0.25),
   ];
   const breaches = runs.length >= MIN_RUNS ? slis.filter((s) => s.breached) : [];
-  return { window: runs.length, runs, slis, breaches, healthy: breaches.length === 0, sufficient: runs.length >= MIN_RUNS, min_runs: MIN_RUNS };
+  return { window: runs.length, runs, slis, breaches, healthy: breaches.length === 0, sufficient: runs.length >= MIN_RUNS, min_runs: MIN_RUNS, synthetic_runs: runs.filter((r) => r.synthetic).length };
 }
 
 export async function health(): Promise<Health> {

@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { investigate, systemPrompt } from '../agent.ts';
+import { investigate, RUNS_DIR, systemPrompt } from '../agent.ts';
 import { loadConstitution } from '../guard/constitution.ts';
 import { selfCasesDir } from '../incidents.ts';
 import { ApiError, MODELS, Usage } from '../llm.ts';
@@ -105,6 +105,27 @@ export async function injectBadSkillEdit(): Promise<{ skill: string; version: nu
   const version = await reg.addVersion('solo', content, 'chaos:demo', 'simulated bad edit by a teammate');
   await reg.activate('solo', version, 'chaos:demo', 'simulated bad edit by a teammate');
   return { skill: 'solo', version };
+}
+
+// Scenario Lab: a bad skill edit plus synthetic failing run records, each marked synthetic, so
+// the detection -> change request -> rollback loop can be shown without model calls. Health
+// reports how many synthetic runs it is counting.
+export async function seedRegression(count = 5): Promise<{ skill: string; version: number; runs: number }> {
+  const bad = await injectBadSkillEdit();
+  const ids = ['inc-001-pool-exhaustion', 'inc-002-oomkilled', 'inc-003-duplicate-charges', 'inc-004-kafka-contract', 'inc-005-readiness-flap'];
+  for (let i = 0; i < count; i++) {
+    const incident = ids[i % ids.length];
+    const at = new Date(Date.now() + 1000 + i).toISOString();
+    const checks = [{ status: 'not_found' }, { status: 'misplaced', found_line: 1 }];
+    const events = [
+      { type: 'start', mode: 'solo', synthetic: true, incident: { id: incident }, model: 'synthetic-seed', at, skills: { versions: { solo: bad.version } } },
+      { type: 'verification', round: 1, checks, accepted: false },
+      { type: 'report', checks, score: { correct: false, groups: [{ any: ['seeded regression'], hit: null }] }, stats: { cost_usd: 0 } },
+    ];
+    await mkdir(path.join(RUNS_DIR, incident), { recursive: true });
+    await writeFile(path.join(RUNS_DIR, incident, `${at.replace(/[:.]/g, '-')}-synthetic.json`), JSON.stringify({ synthetic: true, model: 'synthetic-seed', events }, null, 2));
+  }
+  return { ...bad, runs: count };
 }
 
 // The reflex that works without a model: a regression that began right after an unvalidated

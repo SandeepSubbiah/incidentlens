@@ -4,10 +4,14 @@
   "private": true,
   "description": "Evidence-backed incident investigation agent for Spring Boot / Kubernetes services, built on Meta Muse models.",
   "type": "module",
-  "engines": { "node": ">=24" },
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "start": "node src/server.ts",
     "eval": "node src/eval.ts",
-    "test": "node --test \"test/**/*.test.ts\""
+    "test": "node --test \"test/**/*.test.ts\"",
+    "demo:offline": "node scripts/offline-demo.ts",
+    "mint-token": "node src/cli/mint-token.ts"
   }
 }
