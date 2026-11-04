@@ -53,7 +53,7 @@ explicit (approvals bound to the exact change, veto, expiry, kill switch).
    Its constitution is pinned by hash in code.
 
 ## What is real and what is simulated
-- Implemented and covered by 47 automated tests in CI: verification, the War Room scheduler,
+- Implemented and covered by 53 automated tests in CI: verification, the War Room scheduler,
   governance, self-repair, retrieval, access control and the guards.
 - **Live Muse runs: not yet recorded.** The Meta Model API returns `402 billing_not_configured`
   for this account. _Update this line if billing is fixed and a live run is recorded._
@@ -69,7 +69,7 @@ GitHub Actions.
 ## Try it
 ```
 git clone https://github.com/SandeepSubbiah/incidentlens && cd incidentlens
-npm test               # 47 tests, no key needed
+npm test               # 53 tests, no key needed
 npm run demo:offline   # full UI with a scripted model, http://localhost:5173
 npm start              # live, with MODEL_API_KEY
 ```

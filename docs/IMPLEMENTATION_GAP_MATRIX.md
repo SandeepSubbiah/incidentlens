@@ -1,6 +1,6 @@
 # Implementation gap matrix
 
-Status as of 2026-11-04. "Verified" means exercised by an automated test in `test/`, which runs in
+Status as of 2026-11-04. Sentinel capabilities: [SENTINEL_GAP_MATRIX.md](SENTINEL_GAP_MATRIX.md). Phase P backlog: GitHub issues #1–#16. "Verified" means exercised by an automated test in `test/`, which runs in
 CI on every push. "Mocked" means the model was a scripted stand-in. No row is verified against
 live Muse yet, because the Meta Model API returns `HTTP 402 billing_not_configured` for this
 account (checked 2026-11-03 23:52 ET on both `muse-spark-1.3` and `muse-wonder-1.0`).
@@ -27,11 +27,12 @@ account (checked 2026-11-03 23:52 ET on both `muse-spark-1.3` and `muse-wonder-1
 | Deterministic rollback rule with no model | Implemented + verified | `heal.test.ts`, `seed.test.ts` |
 | Canary validation of a skill patch | Implemented; **partial**: tested with a stub validator, since real canaries need Muse | `heal.test.ts` |
 | Governance: hash-bound approval, quorum, separation of duties, veto, expiry, kill switch, A4 prohibition, execute once | Implemented + verified | `governance.test.ts` |
+| Governance under concurrency and failure: conflicting changes (R7), veto racing execution, kill switch racing execution, partial-commit compensation (R9), restart during approval and during execution (R8) | Implemented + verified | `governance-races.test.ts` |
 | Remediation execution | Simulated by design (isolated copy only) | `governance.test.ts` |
 | Access codes, roles, run budgets, login rate limit, JSON-only POST (CSRF), security headers | Implemented + verified | `access.test.ts` |
 | Fail closed when exposed without `ACCESS_SECRET` | Implemented + verified | `paths.test.ts` |
 | Symlink and junction escape from a case | Implemented + verified | `paths.test.ts` |
-| Durable, multi-instance, restart-safe state | **Partial**: JSON files, atomic writes, one process | |
+| Durable, multi-instance, restart-safe state | **Partial**: JSON files, atomic writes, write-ahead execution record, restart recovery tested; no multi-instance locking | `governance-races.test.ts` |
 | Access-code revocation | **Missing** | |
 | UI: solo, War Room, health, governance | Implemented; checked with Playwright scripts outside CI. Known issue: a 13px horizontal scroll on a 390px phone after a War Room replay | |
 | Offline demo mode | Implemented + smoke-tested | `scripts/offline-demo.ts` |

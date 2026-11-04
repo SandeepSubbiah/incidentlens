@@ -52,7 +52,7 @@ scripted. Never describe Plan B output as Muse output.
   > its constitution or its grader, and every change is audited."
 
 **2:45–3:00 — Close.**
-> "Open source, 47 automated tests, Muse Wonder for deep reasoning, Muse Spark for fast work.
+> "Open source, 53 automated tests, Muse Wonder for deep reasoning, Muse Spark for fast work.
 > Evidence first, humans in charge."
 
 ## If something goes wrong on camera

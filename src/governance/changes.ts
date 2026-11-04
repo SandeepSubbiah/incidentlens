@@ -233,17 +233,19 @@ export async function propose(input: { kind: ChangeKind; title: string; requeste
       expires_at: new Date(now.getTime() + POLICY.ttl_minutes[input.risk] * 60_000).toISOString(),
     };
     const all = await load();
+    all.push(cr);
     await audit().append(input.requester, 'change.proposed', cr.id, { kind: cr.kind, risk: cr.risk, target: cr.target, hash: cr.hash });
     if (input.risk === 'A4') {
       cr.state = 'denied';
       cr.rule = 'R-A4: privileged or irreversible actions are prohibited by policy';
     } else if (POLICY.preauthorized.includes(input.kind)) {
+      // Pre-authorized kinds are rollbacks, which stay allowed under the kill switch.
       cr.decisions.push({ actor: 'policy', role: 'policy', decision: 'approve', reason: `pre-authorized by ${POLICY.version}`, hash: cr.hash, at: now.toISOString() });
       cr.rule = 'R-PREAUTH: restoring a previously validated version is pre-authorized';
-      if ((await killSwitch()).on && input.kind !== 'skill-rollback') cr.rule = 'R1: kill switch is on';
-      else await execute(cr, 'policy');
+      cr.state = 'executing';
+      await save(all); // write-ahead, as for approved changes
+      await execute(cr, 'policy');
     }
-    all.push(cr);
     await save(all);
     return cr;
   });

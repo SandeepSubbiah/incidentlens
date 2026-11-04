@@ -8,7 +8,7 @@ agrees on a root cause. Nothing an agent claims is taken on trust: every quote i
 the source, every patch is applied to an isolated copy, and every change, including changes
 IncidentLens makes to itself, goes through a governance gate that the AI cannot approve or bypass.
 
-> **Status, 2026-11-04.** Every feature below is implemented and covered by 47 automated tests
+> **Status, 2026-11-04.** Every feature below is implemented and covered by 53 automated tests
 > (CI on every push). **No live Muse run has been recorded yet:** the Meta Model API returns
 > `HTTP 402 billing_not_configured` for this account. The tests and the offline demo use a
 > scripted stand-in model, labelled as such in the UI. See
@@ -48,7 +48,7 @@ not change Muse's model weights.
 Requires Node 24 or newer. There are no runtime dependencies to install.
 
 ```powershell
-npm test                 # 47 tests: verifier, War Room, governance, self-repair, access, guards
+npm test                 # 53 tests: verifier, War Room, governance, self-repair, access, guards
 npm run demo:offline     # full UI with a scripted model (no API key; inc-001 only), http://localhost:5173
 npm start                # live, with Muse: needs MODEL_API_KEY and working Meta billing
 npm run eval             # score solo mode on all incidents (add --warroom for War Room mode)
@@ -131,8 +131,11 @@ cannot read (enforced and tested).
   locking, and access codes cannot yet be revoked.
 - Retrieval is lexical (BM25). The Meta Model API has no embeddings endpoint.
 
-More: [architecture decisions](docs/DECISION_LOG.md), [threat model](docs/THREAT_MODEL.md),
-[roadmap](docs/ROADMAP.md), [demo script](docs/DEMO_SCRIPT_3_MIN.md).
+More: [architecture](docs/ARCHITECTURE.md), [governance](docs/GOVERNANCE.md),
+[self-evolution](docs/SELF_EVOLUTION.md), [evaluation protocol](docs/EVALUATION_PROTOCOL.md),
+[Sentinel gap matrix](docs/SENTINEL_GAP_MATRIX.md), [decisions](docs/DECISION_LOG.md),
+[threat model](docs/THREAT_MODEL.md), [roadmap](docs/ROADMAP.md) (issues #1–#16),
+[demo script](docs/DEMO_SCRIPT_3_MIN.md).
 
 ## License
 
