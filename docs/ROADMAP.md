@@ -1,5 +1,7 @@
 # Roadmap
 
+Current verified capability status: [FEATURE_STATUS.md](FEATURE_STATUS.md). PR #22's provider-neutral continuity router is merged but **not integrated** with live inference. Before production use it needs backend-derived policy, provider adapters, effect records and a measured rollout. The roadmap items below are goals, not shipped functionality.
+
 Ordered by dependency. Nothing here is claimed as done.
 
 1. **Live Muse validation.** Run the eval in solo and War Room modes. Record real runs for

@@ -1,11 +1,11 @@
 ﻿# Sentinel continuity router — isolated prototype
 
-**Status:** Experimental, not wired into production inference or the existing Muse agent runtime. Implemented on a feature branch only. Disabled by virtue of not being imported by any live path.
+**Status:** Merged into `main` via [PR #22](https://github.com/SandeepSubbiah/incidentlens/pull/22) on November 4, 2026. **Still an isolated prototype**: not imported by `src/llm.ts`, `src/server.ts` or any live inference path. Merge does not mean production activation.
 
 ## What exists
 
 - `src/continuity/router.ts`: a provider-neutral adapter interface and a bounded, policy-constrained failover router.
-- `test/continuity.test.ts` (12 tests) and `test/continuity-hardening.test.ts` (17 tests): deterministic local tests, including negative, concurrency and fault-injection cases.
+- `test/continuity.test.ts`, `test/continuity-hardening.test.ts` and `test/continuity-stale.test.ts`: deterministic negative, concurrency, stale-completion and fault-injection tests. GitHub Actions on the final PR head reported 103/103 overall tests passing.
 - Isolated per-endpoint in-memory circuit-breaker state, with an injectable clock for deterministic cooldown tests.
 - Backup selection requires independently permitted tenant, data classification, region, operation, tool capabilities and endpoint ID.
 - Refuses to switch models after a committed output or potential non-idempotent side effect, and refuses *any* new invocation of an already-committed operation (`outputCommitted` rejects with zero endpoint calls, whatever `safeToRetry` claims).
@@ -37,11 +37,13 @@
 
 ## Run
 
-From a checkout of this branch:
+From a checkout of `main` after PR #22:
 
 ```powershell
-node --test test/continuity.test.ts test/continuity-hardening.test.ts
+node --test test/continuity.test.ts test/continuity-hardening.test.ts test/continuity-stale.test.ts
 npm test
 ```
 
-Do not merge during the hackathon release without reviewing CI and ensuring its demo remains unchanged.
+**Not yet integrated:** Connecting this router to production-like traffic requires separate review, end-to-end tests, privacy policy, provider adapters and a disabled-by-default rollout. Keep the working hackathon demo unchanged until that verification is complete.
+
+Current feature inventory: [FEATURE_STATUS.md](FEATURE_STATUS.md).

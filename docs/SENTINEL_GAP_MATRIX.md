@@ -16,12 +16,14 @@ as of 2026-11-04, commit after `72c71c6`.
 "Tested" never means tested against live Muse. A framework reference below means the
 capability relates to that item. It does not mean the item is satisfied.
 
+**Post-merge reference:** [FEATURE_STATUS.md](FEATURE_STATUS.md) distinguishes the now-merged provider-neutral continuity prototype from live Muse reflexes. PR #22 final-head CI passed 103/103 tests; it is not production-activated.
+
 ## 1. AI security and adversarial testing
 
 | Capability | Status | Evidence or gap |
 |---|---|---|
 | Synthetic incidents with planted adversarial content | Tested | inc-005 log line; `guard.test.ts` |
-| Typed scenario registry (`ScenarioDefinition`), `npm run sentinel:test` | Missing | Scenarios exist as ordinary tests, not a registry |
+| Typed scenario registry (`ScenarioDefinition`), `npm run sentinel:test` | Partial | `npm run sentinel:smoke` runs 21 deterministic scenarios (15 PASS, 6 open FAIL in last reported run). A full typed registry and `sentinel:test` are still missing |
 | Scenario scope, consent and budget metadata | Missing | |
 | Opt-in garak, PyRIT or Promptfoo adapters | Missing | |
 | Isolation of attack fixtures from demo traffic | Partial | Synthetic runs flagged `synthetic: true`; offline demo uses separate folders; no general scope model |

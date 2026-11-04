@@ -2,7 +2,7 @@
 
 This is the part of the Sentinel continuity specification that runs in IncidentLens today and
 that can be shown on live Muse. It reuses the model reflexes already in `src/llm.ts` (breaker,
-failover, fault injection). It does not use the separate router prototype in draft PR #22.
+failover, fault injection). It does not use the separately tested router prototype that PR #22 later merged into `main`.
 
 ## What happens
 
@@ -81,18 +81,12 @@ The work is one merge commit on `main`. The release before it is tagged `pre-con
 - The ledger file (`data/evolution-ledger.jsonl`) is data. Deleting it removes only the
   opportunities.
 
-## Review of draft PR #22 (not merged)
+## PR #22 merged: policy-aware router remains a separate prototype
 
-**Sound:**
-- A backup must independently allow the same tenant, data class, region, operation and
-  capabilities.
-- It never fails over on auth, billing, policy, security or unclassified errors.
-- It refuses to retry committed output.
+[PR #22](https://github.com/SandeepSubbiah/incidentlens/pull/22) was merged into `main` on November 4, 2026. The code review identified observer failures, committed-output replay, absent deadlines, concurrent half-open probes, mutable routing scopes, and stale completions. Follow-up commits added targeted regression tests and fixes; the final PR-head GitHub Actions run passed **103/103 automated tests**.
 
-**Before it can be wired in:**
-1. **Two sources of truth.** It duplicates the breaker and failover in `src/llm.ts`; integrate by
-   replacing those, not alongside them.
-2. **`half_open` is only a label.** Nothing limits probe traffic after cooldown.
-3. **No time or run correlation on events,** and deadlines are not enforced inside the router.
-4. **Trusts its caller.** `safeToRetry` and allowlists are inputs; derive them server-side.
-5. **Hard-to-review tests.** They are written as minified one-liners.
+**Important:** The new `src/continuity/router.ts` is not called by the live War Room or `src/llm.ts`. The live demonstration documented above uses the existing same-provider Meta Muse reflexes and an explicitly *simulated* Wonder outage.
+
+Before integrating the new router, preserve the existing state machine, remove duplicate breaker authorities, derive permissions from trusted server policy, record side effects durably, require compatible approved provider adapters, and verify latency, cost, data classification, rollback and recovery with controlled experiments. No zero-downtime or mid-stream recovery guarantee is currently established.
+
+See [continuity prototype](CONTINUITY_PROTOTYPE.md), [feature status](FEATURE_STATUS.md) and [implementation gaps](IMPLEMENTATION_GAP_MATRIX.md).

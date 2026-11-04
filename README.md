@@ -1,4 +1,4 @@
-# IncidentLens
+# IncidentLens — Evidence-First AI Incident Response & Governed Self-Repair
 
 **Evidence-first incident investigation with governed self-repair, built on Meta Muse.**
 
@@ -8,8 +8,9 @@ agrees on a root cause. Nothing an agent claims is taken on trust: every quote i
 the source, every patch is applied to an isolated copy, and every change, including changes
 IncidentLens makes to itself, goes through a governance gate that the AI cannot approve or bypass.
 
-> **Status, 2026-11-04.** Every feature below is implemented and covered by 69 automated tests
-> (CI on every push), which use a scripted stand-in model. **First live Muse evaluation,
+> **Status, 2026-11-04.** The core system and the merged continuity prototype are covered by **103 automated tests**
+> (GitHub Actions passed on PR #22's final head). These tests use scripted models or deterministic
+> stubs; the separate recorded live Muse evaluation is described below. **First live Muse evaluation,
 > 2026-11-04**, on `muse-wonder-1.0` and `muse-spark-1.3`, one run per incident:
 > - Solo mode found the root cause in 5 of 5 incidents, War Room mode in 5 of 5.
 > - All 109 citations in the final reports were verified.
@@ -20,6 +21,13 @@ IncidentLens makes to itself, goes through a governance gate that the AI cannot 
 > [live results](docs/EVALUATION_PROTOCOL.md#live-results-2026-11-04). The offline demo uses a
 > scripted model, labelled as such. [docs/IMPLEMENTATION_GAP_MATRIX.md](docs/IMPLEMENTATION_GAP_MATRIX.md)
 > says exactly what is verified, simulated, partial or missing.
+
+## See what it does
+
+- **[Capabilities and roadmap](public/capabilities.html)** — the in-app overview of features, evidence, limits and planned improvements. Run the app and open `/capabilities.html` in your browser.
+- **[Verified feature status](docs/FEATURE_STATUS.md)** — evidence matrix separating live-validated behavior, tested prototypes and unimplemented ambitions.
+- **[Continuity and Evolution Ledger demo](docs/CONTINUITY_DEMO.md)** — real Muse Spark/Wonder responses during an explicitly simulated outage.
+- **[Security assurance findings](docs/SECURITY_ASSURANCE_FINDINGS.md)** — published open failures alongside passing tests.
 
 ## What it does
 
@@ -54,6 +62,8 @@ IncidentLens makes to itself, goes through a governance gate that the AI cannot 
    Ledger entry that proposes an improvement. Shown live with an injected outage:
    [docs/CONTINUITY_DEMO.md](docs/CONTINUITY_DEMO.md).
 
+**Two continuity implementations have different maturity.** The existing `src/llm.ts` failover was exercised against real Muse with a *simulated* Wonder outage; the newly merged `src/continuity/router.ts` is a separately unit-tested policy router and **is not used by the live server yet**. It adds tenant/region/data-class filtering, deadlines, safe retry decisions, circuit probe serialization, stale-completion protection and telemetry isolation, but not production high availability or streaming recovery. See [PR #22](https://github.com/SandeepSubbiah/incidentlens/pull/22) and [prototype limits](docs/CONTINUITY_PROTOTYPE.md).
+
 IncidentLens improves the system around Muse (skills, retrieval, routing, verification). It does
 not change Muse's model weights.
 
@@ -62,7 +72,7 @@ not change Muse's model weights.
 Requires Node 24 or newer. There are no runtime dependencies to install.
 
 ```powershell
-npm test                 # 69 tests: verifier, War Room, governance, self-repair, access, guards, security, continuity, provenance
+npm test                 # 103 tests on merged PR head: verifier, War Room, governance, self-repair, access, guards, security, continuity, provenance
 npm run demo:offline     # full UI with a scripted model (no API key; inc-001 only), http://localhost:5173
 npm start                # live, with Muse: needs MODEL_API_KEY and working Meta billing
 npm run eval             # score solo mode on all incidents (add --warroom for War Room mode)
@@ -111,7 +121,8 @@ flowchart LR
 
 | Module | Responsibility |
 |---|---|
-| `src/llm.ts` | Muse client: Responses and Messages wires, fast/deep tiers, circuit breakers, failover, Retry-After, parameter negotiation, cost metering |
+| `src/llm.ts` | Live Muse client: Responses and Messages wires, fast/deep tiers, circuit breakers, failover, Retry-After, parameter negotiation, cost metering |
+| `src/continuity/router.ts` | **Tested prototype, not integrated with live inference:** policy-restricted fallback, deadlines, circuit-breaker generation/half-open leases, observer isolation |
 | `src/agent.ts`, `src/loop.ts` | Solo investigator and the shared tool loop |
 | `src/warroom/` | Shared board, role tools, priority scheduler with pause and resume |
 | `src/verify.ts`, `src/sandbox.ts` | Citation verification, patch line check, patch application to an isolated copy |
@@ -150,13 +161,19 @@ cannot read (enforced and tested).
   agents having read-only tools and from the governance gate.
 - State lives in JSON files with atomic writes in a single process. There is no multi-instance
   locking, and access codes cannot yet be revoked.
+- The new provider-neutral router is merged but **not activated in the application**; it cannot
+  deliver zero-downtime deployments, midstream resumption or cross-provider privacy guarantees in production.
+- The most recent published 21-scenario Sentinel security smoke run reported **15 passes and
+  6 open failures**. The project is not a certified secure production platform.
 - Retrieval is lexical (BM25). The Meta Model API has no embeddings endpoint.
 
-More: [architecture](docs/ARCHITECTURE.md), [governance](docs/GOVERNANCE.md),
+More: [feature status](docs/FEATURE_STATUS.md), [continuity prototype](docs/CONTINUITY_PROTOTYPE.md),
+[security findings](docs/SECURITY_ASSURANCE_FINDINGS.md),
+[architecture](docs/ARCHITECTURE.md), [governance](docs/GOVERNANCE.md),
 [self-evolution](docs/SELF_EVOLUTION.md), [evaluation protocol](docs/EVALUATION_PROTOCOL.md),
 [Sentinel gap matrix](docs/SENTINEL_GAP_MATRIX.md), [decisions](docs/DECISION_LOG.md),
 [threat model](docs/THREAT_MODEL.md), [roadmap](docs/ROADMAP.md) (issues #1–#16),
-[demo script](docs/DEMO_SCRIPT_3_MIN.md).
+[demo script](docs/DEMO_SCRIPT_3_MIN.md), and [SEO/discoverability guidance](docs/SEO_DISCOVERABILITY.md).
 
 ## License
 

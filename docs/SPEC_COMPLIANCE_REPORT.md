@@ -125,7 +125,7 @@ Corrupted memory is missing.
 2. A governance gate whose race tests failed against the earlier code; three defects fixed.
 3. Self-repair that cannot see its grader or edit its constitution, with human approval.
 4. Honest labelling: "not Muse", synthetic, simulated.
-5. 69 tests in CI (53 at the time of this report), clean clone, and docs that map claims to tests.
+5. 103 tests passed on PR #22's final CI head (53 at the original handoff), with docs mapping claims to tests. The merged policy-router prototype remains outside live inference.
 
 ## Largest gaps, in order
 

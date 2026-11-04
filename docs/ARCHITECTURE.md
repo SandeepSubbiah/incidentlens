@@ -7,6 +7,15 @@ evidence: [IMPLEMENTATION_GAP_MATRIX.md](IMPLEMENTATION_GAP_MATRIX.md) and
 
 ## Part 1 — As built
 
+**Merged but not wired into the running application:** `src/continuity/router.ts` is an
+isolated, provider-neutral continuity prototype added in [PR #22](https://github.com/SandeepSubbiah/incidentlens/pull/22).
+It is unit-tested for policy-restricted routing, deadlines, circuit breakers, committed-output
+rejection, stale completion handling and telemetry isolation. The live `src/llm.ts` model
+client still owns the existing same-provider failover mechanism. There is no production
+cross-provider failover, multi-instance control plane, or seamless stream restoration.
+See [feature status](FEATURE_STATUS.md) and [continuity limits](CONTINUITY_PROTOTYPE.md).
+
+
 One Node.js 24 process, TypeScript run directly, no runtime dependencies. The only outbound
 network calls go to the Meta Model API (`MODEL_BASE_URL`, default `https://api.meta.ai`). State
 is kept in JSON files under `data/` (registry, governance ledger, audit log, learned cases,

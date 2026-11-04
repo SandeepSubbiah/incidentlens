@@ -58,7 +58,7 @@ explicit (approvals bound to the exact change, veto, expiry, kill switch).
   authored test cases), **live Muse** or **scripted model, not Muse**, and any **simulated
   fault**. Change requests, Evolution Ledger entries, replays and evaluation scores carry the
   same labels. Records made before these labels existed say "source not recorded", never "real".
-- Implemented and covered by 69 automated tests in CI: verification, the War Room scheduler,
+- Core functionality and the separately tested continuity prototype covered by **103 automated tests** in the merged PR #22 CI run: verification, the War Room scheduler,
   governance, self-repair, retrieval, access control and the guards.
 - **Live Muse results (2026-11-04, one run per incident).**
   - Solo (`muse-wonder-1.0`): 5 of 5 root causes correct, 5 of 5 fix targets, 51 of 51
@@ -84,6 +84,12 @@ explicit (approvals bound to the exact change, veto, expiry, kill switch).
 - The offline demo uses a scripted model labelled "not Muse". The self-repair demo uses seeded
   synthetic run records, labelled as synthetic.
 
+## Continuity improvements and their limits
+
+- **Live Muse demonstration:** with an explicitly simulated Wonder outage, Spark answered and the breaker/recovery state was visible. This does not prove a real provider outage or uninterrupted streaming.
+- **Merged research prototype, not active routing:** [PR #22](https://github.com/SandeepSubbiah/incidentlens/pull/22) adds separately tested, policy-constrained provider-neutral routing with bounded deadlines, safe retries and circuit-breaker protection. It is not connected to live requests.
+- **In-app capabilities page:** `/capabilities.html` distinguishes implemented features, measured behavior, prototypes, known security gaps and proposed work. [Feature status](FEATURE_STATUS.md) is the source of truth.
+
 ## Built with
 Node.js 24 (TypeScript, no runtime dependencies), Meta Model API, vanilla HTML/CSS/JS,
 GitHub Actions.
@@ -91,7 +97,7 @@ GitHub Actions.
 ## Try it
 ```
 git clone https://github.com/SandeepSubbiah/incidentlens && cd incidentlens
-npm test               # 69 tests, no key needed
+npm test               # 103 tests on merged PR head, no key needed
 npm run demo:offline   # full UI with a scripted model, http://localhost:5173
 npm start              # live, with MODEL_API_KEY
 ```
