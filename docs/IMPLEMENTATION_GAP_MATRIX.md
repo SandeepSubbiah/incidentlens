@@ -8,6 +8,7 @@ that morning the API returned `402 billing_not_configured`.
 
 | Capability | Status | Evidence |
 |---|---|---|
+| Provider-neutral continuity router (PR #22) | **Merged/tested prototype, not integrated into live inference**. Tenant, data class, region, capabilities, deadlines, circuit breaker generation and safe retries are tested independently; no real provider adapter or streaming recovery. | `test/continuity.test.ts`, `test/continuity-hardening.test.ts`, `test/continuity-stale.test.ts` |
 | Muse inference, Responses and Messages wires, tool calling | Implemented + mocked verified. **Live: works** on both models over the Responses API (12 recorded runs); a Messages API tool call returned `tool_use` on both | `agent-responses.test.ts`, `agent-messages.test.ts` |
 | Fast/deep routing, circuit breaker, failover, Retry-After, parameter negotiation, billing errors not retried | Implemented + mocked verified. Live: routing works; the reflexes never fired, because no live call failed | `reflexes.test.ts` |
 | Citation verification (fabricated, misplaced, missing file) | Implemented + verified | `core.test.ts` |
