@@ -22,6 +22,12 @@
    `synthetic: true`; offline-demo models are named `scripted-...`.
 7. Never write `MODEL_API_KEY` or `ACCESS_SECRET` to a file or log.
 
+## Publication and release rules
+- Public claims must match [docs/FEATURE_STATUS.md](docs/FEATURE_STATUS.md) and current CI. Live Muse, scripted output, synthetic incidents and injected faults must be distinguished.
+- `src/continuity/router.ts` is a **merged but disconnected prototype**: it is not the live router in `src/llm.ts`; never describe it as production failover or zero-downtime recovery.
+- Update the README, `/capabilities.html`, demo script, submission pack and evidence matrix together whenever the verified behavior changes.
+- Keep changes to the working hackathon release small, separately reviewable and reversible.
+
 ## Map
 See the module table in README.md. Decisions and rejected alternatives: docs/DECISION_LOG.md.
 Capability status: docs/IMPLEMENTATION_GAP_MATRIX.md.
