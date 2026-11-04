@@ -153,7 +153,7 @@ Medium for provenance.
 These change live investigation or verification behaviour, so they wait until after the
 recording.
 
-**SF-07 — A disconnected client does not stop the server-side run (F05).** Medium.
+**SF-07 — A disconnected client does not stop the server-side run (F05).** Medium. Issue #17.
 - **Reproduction:** 7 more model calls happened in the 1.5 s after the client aborted.
 - **Limits on cost today:**
   - at most 2 concurrent live runs;
@@ -162,17 +162,17 @@ recording.
 - **Fix plan:** pass an `AbortSignal` from the response's `close` event into the tool loop and the
   War Room scheduler, and stop at the next turn boundary.
 
-**SF-08 — An elided quote can stitch distant lines together (B04).** Medium.
+**SF-08 — An elided quote can stitch distant lines together (B04).** Medium. Issue #18.
 - **Reproduction:** "HikariPool-1 - Start completed ... request timed out after 30000ms" verifies
   when cited as lines 1–33, although the two fragments are 18 lines apart.
 - **Fix plan:** cap the distance between fragments, and record that a quote was elided.
 
-**SF-09 — Deleting the newest audit entries is not detected (G20).** Medium.
+**SF-09 — Deleting the newest audit entries is not detected (G20).** Medium. Issue #19.
 - **Reproduction:** after the last entry is deleted, `verify()` still reports a valid chain of 2.
 - **Why:** a hash chain cannot prove its own tail.
 - **Fix plan:** anchor the head hash and length outside the log's own write path (issue #1).
 
-**SF-10 — Read endpoints are public while access codes are on (D01).** Risk accepted for the
+**SF-10 — Read endpoints are public while access codes are on (D01).** Issue #20. Risk accepted for the
 demo; High before any non-synthetic data.
 - **Readable without a code:**
   - audit log;
@@ -189,7 +189,7 @@ demo; High before any non-synthetic data.
 for "GC pauses caused the outage" verifies. The README already says this; claim-level checking is
 issue #6.
 
-**SF-12 — Keyword scoring passes a report that negates every key term (B19).** "Not Hikari pool
+**SF-12 — Keyword scoring passes a report that negates every key term (B19).** Issue #21. "Not Hikari pool
 exhaustion, not the fraud call and not @Transactional: the cause is a DNS outage" scores correct.
 The live 5-of-5 results stand as keyword scores, and the docs call them that. Case memory
 promotes reports on this same score, so a wrong-but-keyword-matching report could become a
