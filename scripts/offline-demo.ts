@@ -8,7 +8,7 @@ import { startRoleFake } from '../test/fixtures/warroom-script.ts';
 // kept in separate folders so it never mixes with real runs.
 
 const ROOT = path.resolve(import.meta.dirname, '..');
-const fake = await startRoleFake(350, { unknownRoleStatus: 402, onlyIncident: 'inc-001-pool-exhaustion' });
+const fake = await startRoleFake(800, { unknownRoleStatus: 422, onlyIncident: 'inc-001-pool-exhaustion' });
 const label = (tier: string) => `scripted-${tier} (offline demo, not Muse)`;
 const server = spawn(process.execPath, ['src/server.ts'], {
   cwd: ROOT,

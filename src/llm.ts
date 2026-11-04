@@ -84,7 +84,7 @@ export interface Session {
 export class ApiError extends Error {
   status: number;
   constructor(status: number, body: string) {
-    super(`Meta Model API ${status}: ${body.slice(0, 500)}`);
+    super(`Model API ${status}: ${body.slice(0, 500)}`);
     this.status = status;
   }
 }

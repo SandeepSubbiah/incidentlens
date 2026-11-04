@@ -103,7 +103,7 @@ export async function startRoleFake(delayMs = 0, opts: { unknownRoleStatus?: num
     requests.push({ role, model: body.model, body });
     if (role === 'unknown' && opts.unknownRoleStatus) {
       res.writeHead(opts.unknownRoleStatus, { 'content-type': 'application/json' });
-      return res.end(JSON.stringify({ error: { message: 'scripted: no script for this role' } }));
+      return res.end(JSON.stringify({ error: { message: 'offline demo: no script for this role' } }));
     }
     const history = body.input ?? body.messages ?? [];
     if (opts.onlyIncident && !JSON.stringify(history).includes(opts.onlyIncident)) {
