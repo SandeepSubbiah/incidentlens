@@ -1,5 +1,6 @@
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { dataDir } from './paths.ts';
 
 export const INCIDENTS_DIR = path.resolve(import.meta.dirname, '..', 'incidents');
 
@@ -28,9 +29,12 @@ export interface Artifact {
   bytes: number;
 }
 
+// Self-investigation cases (IncidentLens diagnosing itself) live under the data directory.
+export const selfCasesDir = () => path.join(dataDir(), 'self-cases');
+
 function incidentRoot(id: string): string {
   if (!/^[a-z0-9-]+$/.test(id)) throw new Error(`invalid incident id: ${id}`);
-  return path.join(INCIDENTS_DIR, id);
+  return id.startsWith('self-') ? path.join(selfCasesDir(), id) : path.join(INCIDENTS_DIR, id);
 }
 
 export async function listIncidents(): Promise<IncidentMeta[]> {

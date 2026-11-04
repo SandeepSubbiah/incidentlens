@@ -1,3 +1,4 @@
+import { stripQuarantineMark } from './guard/injection.ts';
 import { readArtifact } from './incidents.ts';
 
 // Checks every claim the model makes against the files it claims to have read.
@@ -26,7 +27,7 @@ function norm(s: string): string {
 
 // Models sometimes echo the "12| " prefix from read_artifact, or elide with "...".
 function quoteFragments(quote: string): string[] {
-  const unprefixed = quote
+  const unprefixed = stripQuarantineMark(String(quote))
     .split('\n')
     .map((l) => l.replace(/^\s*\d+\|\s?/, ''))
     .join('\n');

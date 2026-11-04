@@ -2,6 +2,7 @@ import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import os from 'node:os';
 import path from 'node:path';
+import { mkdtemp } from 'node:fs/promises';
 import { startFakeModel, revisionScript } from './fake-model.ts';
 
 const fake = await startFakeModel(revisionScript);
@@ -9,6 +10,7 @@ after(() => fake.close());
 process.env.MODEL_BASE_URL = fake.url;
 process.env.MODEL_API_KEY = 'test-key';
 process.env.INCIDENTLENS_RUNS_DIR = path.join(os.tmpdir(), 'incidentlens-test-runs');
+process.env.INCIDENTLENS_DATA_DIR = await mkdtemp(path.join(os.tmpdir(), 'incidentlens-data-'));
 process.env.LLM_WIRE = 'messages';
 const { investigate } = await import('../src/agent.ts');
 

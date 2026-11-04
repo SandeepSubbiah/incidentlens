@@ -23,21 +23,21 @@ test('agent cannot see or read the answer key', async () => {
   const arts = (await listArtifacts(INC)).map((a) => a.path);
   assert.ok(!arts.includes('ground-truth.json'));
   assert.ok(!arts.includes('incident.json'));
-  await assert.rejects(runTool(INC, 'read_artifact', { path: 'ground-truth.json' }), /no such artifact/);
-  await assert.rejects(runTool(INC, 'read_artifact', { path: './ground-truth.json' }), /no such artifact/);
-  await assert.rejects(runTool(INC, 'read_artifact', { path: '../inc-002-oomkilled/ground-truth.json' }), /outside incident/);
-  const search = await runTool(INC, 'search_artifacts', { pattern: 'must_mention' });
+  await assert.rejects(runTool({ caseId: INC }, 'read_artifact', { path: 'ground-truth.json' }), /no such artifact/);
+  await assert.rejects(runTool({ caseId: INC }, 'read_artifact', { path: './ground-truth.json' }), /no such artifact/);
+  await assert.rejects(runTool({ caseId: INC }, 'read_artifact', { path: '../inc-002-oomkilled/ground-truth.json' }), /outside incident/);
+  const search = await runTool({ caseId: INC }, 'search_artifacts', { pattern: 'must_mention' });
   assert.equal(search.output, 'no matches');
 });
 
 test('read_artifact numbers lines and pages', async () => {
-  const r = await runTool(INC, 'read_artifact', { path: SVC, start_line: 31, end_line: 33 });
+  const r = await runTool({ caseId: INC }, 'read_artifact', { path: SVC, start_line: 31, end_line: 33 });
   assert.equal(r.output.split('\n')[0], '31|     @Transactional');
   assert.match(r.output, /more lines; call again with start_line=34/);
 });
 
 test('search finds a known line (positive control)', async () => {
-  const r = await runTool(INC, 'search_artifacts', { pattern: 'request timed out after \\d+ms' });
+  const r = await runTool({ caseId: INC }, 'search_artifacts', { pattern: 'request timed out after \\d+ms' });
   assert.ok(r.output.split('\n').length >= 3, r.output);
   assert.match(r.output, /^logs\/payment-service\.log:\d+\| /);
 });
