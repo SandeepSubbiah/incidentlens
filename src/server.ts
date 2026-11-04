@@ -11,7 +11,7 @@ import { constitutionStatus } from './guard/constitution.ts';
 import { injectBadSkillEdit, runDoctor, seedRegression } from './heal/doctor.ts';
 import { health } from './heal/health.ts';
 import { listArtifacts, listIncidents, readArtifact } from './incidents.ts';
-import { MODELS, reflexState, WIRE } from './llm.ts';
+import { MODELS, modelEndpoint, reflexState, WIRE } from './llm.ts';
 import { getRegistry, lineDiff } from './skills/registry.ts';
 import { runWarRoom, TIERS } from './warroom/run.ts';
 
@@ -127,7 +127,7 @@ export function createApp(): Server {
         return json(res, 200, claims ? { sub: claims.sub, role: claims.role, runs_left: gated() ? await runsLeft(claims) : null, gated: gated() } : { gated: true, sub: null });
       }
       if (route === 'config') {
-        return json(res, 200, { model: MODELS.deep, models: MODELS, tiers: TIERS, wire: WIRE, key: Boolean(process.env.MODEL_API_KEY), gated: gated(), constitution: { ok: constitutionStatus().ok, sha256: constitutionStatus().sha256 } });
+        return json(res, 200, { model: MODELS.deep, models: MODELS, tiers: TIERS, wire: WIRE, endpoint: modelEndpoint(), key: Boolean(process.env.MODEL_API_KEY), gated: gated(), constitution: { ok: constitutionStatus().ok, sha256: constitutionStatus().sha256 } });
       }
       if (route === 'incidents') return json(res, 200, await listIncidents());
       if (parts[1] === 'incidents' && parts[3] === 'artifacts') return json(res, 200, await listArtifacts(parts[2]));

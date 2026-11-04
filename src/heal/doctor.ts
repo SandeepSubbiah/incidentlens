@@ -8,6 +8,7 @@ import { runToolLoop, type AgentEvent, type Emit } from '../loop.ts';
 import { getRegistry, lineDiff, type Registry } from '../skills/registry.ts';
 import { ARTIFACT_TOOLS, SUBMIT_TOOL, type ToolDef } from '../tools.ts';
 import { propose } from '../governance/changes.ts';
+import { provenanceNow } from '../provenance.ts';
 import { verifyEvidence } from '../verify.ts';
 import { health as currentHealth, type Health, type RunSummary } from './health.ts';
 
@@ -118,7 +119,7 @@ export async function seedRegression(count = 5): Promise<{ skill: string; versio
     const at = new Date(Date.now() + 1000 + i).toISOString();
     const checks = [{ status: 'not_found' }, { status: 'misplaced', found_line: 1 }];
     const events = [
-      { type: 'start', mode: 'solo', synthetic: true, incident: { id: incident }, model: 'synthetic-seed', at, skills: { versions: { solo: bad.version } } },
+      { type: 'start', mode: 'solo', synthetic: true, provenance: { incident: 'synthetic', inference: 'none' }, incident: { id: incident }, model: 'synthetic-seed', at, skills: { versions: { solo: bad.version } } },
       { type: 'verification', round: 1, checks, accepted: false },
       { type: 'report', checks, score: { correct: false, groups: [{ any: ['seeded regression'], hit: null }] }, stats: { cost_usd: 0 } },
     ];
@@ -173,7 +174,7 @@ export async function runDoctor(emit: Emit, opts: { force?: boolean; validate?: 
       const suspect = suspectChange(h, reg);
       if (suspect) {
         const reason = `all failing runs after the change used ${suspect.name} v${suspect.to}, changed by ${suspect.author}`;
-        const cr = await propose({ kind: 'skill-rollback', title: `Roll back ${suspect.name} v${suspect.to}`, requester: 'doctor:reflex', risk: 'A1', target: `skill:${suspect.name}`, payload: { skill: suspect.name, reason }, evidence: [caseId] });
+        const cr = await propose({ kind: 'skill-rollback', title: `Roll back ${suspect.name} v${suspect.to}`, requester: 'doctor:reflex', risk: 'A1', target: `skill:${suspect.name}`, payload: { skill: suspect.name, reason }, evidence: [caseId], provenance: { ...provenanceNow('self-case', 'none'), synthetic_runs: h.synthetic_runs } });
         send({ type: 'doctor', phase: 'rollback', skill: suspect.name, from: suspect.to, to: (cr.result?.version as number) ?? suspect.from, by: 'reflex', reason, change: cr.id, state: cr.state, rule: cr.rule });
         outcome = { type: 'doctor', phase: 'done', action: 'rollback', skill: suspect.name };
       } else {
@@ -226,7 +227,7 @@ async function diagnose(caseId: string, h: Health, reg: Registry, send: Emit, va
       if (!r.skill || !view.get(r.skill)) return retry(`Unknown skill ${r.skill}. Only role or runbook skills listed in the registry can change.`);
       if (r.action === 'rollback') {
         const from = view.get(r.skill)!.version;
-        const cr = await propose({ kind: 'skill-rollback', title: `Roll back ${r.skill} v${from}`, requester: 'doctor', risk: 'A1', target: `skill:${r.skill}`, payload: { skill: r.skill, reason: r.rationale }, evidence: [caseId] });
+        const cr = await propose({ kind: 'skill-rollback', title: `Roll back ${r.skill} v${from}`, requester: 'doctor', risk: 'A1', target: `skill:${r.skill}`, payload: { skill: r.skill, reason: r.rationale }, evidence: [caseId], provenance: { ...provenanceNow('self-case'), synthetic_runs: h.synthetic_runs } });
         send({ type: 'doctor', phase: 'rollback', skill: r.skill, from, to: cr.result?.version, by: 'doctor', reason: r.rationale, change: cr.id, state: cr.state, rule: cr.rule });
         result = { type: 'doctor', phase: 'done', action: 'rollback', skill: r.skill };
         return { done: true };
@@ -243,7 +244,7 @@ async function diagnose(caseId: string, h: Health, reg: Registry, send: Emit, va
         return { done: true };
       }
       // Validated is not authorized: a human approves the exact change before it goes live.
-      const cr = await propose({ kind: 'skill-change', title: `Patch ${r.skill}: ${String(r.summary).slice(0, 120)}`, requester: 'doctor', risk: 'A1', target: `skill:${r.skill}`, payload: { skill: r.skill, content: String(r.new_content), rationale: r.rationale }, evidence: [caseId, ...canaries] });
+      const cr = await propose({ kind: 'skill-change', title: `Patch ${r.skill}: ${String(r.summary).slice(0, 120)}`, requester: 'doctor', risk: 'A1', target: `skill:${r.skill}`, payload: { skill: r.skill, content: String(r.new_content), rationale: r.rationale }, evidence: [caseId, ...canaries], provenance: { ...provenanceNow('self-case'), synthetic_runs: h.synthetic_runs } });
       send({ type: 'doctor', phase: 'awaiting-approval', skill: r.skill, change: cr.id, hash: cr.hash, required: cr.required_approvals, expires_at: cr.expires_at });
       result = { type: 'doctor', phase: 'done', action: 'proposed', skill: r.skill, change: cr.id };
       return { done: true };

@@ -54,7 +54,11 @@ explicit (approvals bound to the exact change, veto, expiry, kill switch).
    Its constitution is pinned by hash in code.
 
 ## What is real and what is simulated
-- Implemented and covered by 65 automated tests in CI: verification, the War Room scheduler,
+- Every screen and record says where its data came from: **synthetic incident** (all five are
+  authored test cases), **live Muse** or **scripted model, not Muse**, and any **simulated
+  fault**. Change requests, Evolution Ledger entries, replays and evaluation scores carry the
+  same labels. Records made before these labels existed say "source not recorded", never "real".
+- Implemented and covered by 69 automated tests in CI: verification, the War Room scheduler,
   governance, self-repair, retrieval, access control and the guards.
 - **Live Muse results (2026-11-04, one run per incident).**
   - Solo (`muse-wonder-1.0`): 5 of 5 root causes correct, 5 of 5 fix targets, 51 of 51
@@ -87,7 +91,7 @@ GitHub Actions.
 ## Try it
 ```
 git clone https://github.com/SandeepSubbiah/incidentlens && cd incidentlens
-npm test               # 65 tests, no key needed
+npm test               # 69 tests, no key needed
 npm run demo:offline   # full UI with a scripted model, http://localhost:5173
 npm start              # live, with MODEL_API_KEY
 ```

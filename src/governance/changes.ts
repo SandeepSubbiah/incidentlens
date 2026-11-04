@@ -3,6 +3,7 @@ import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { auditLogAt } from '../guard/audit.ts';
 import { dataDir } from '../paths.ts';
+import type { Provenance } from '../provenance.ts';
 import { sandboxApply } from '../sandbox.ts';
 import { getRegistry } from '../skills/registry.ts';
 
@@ -44,6 +45,9 @@ export interface ChangeRequest {
   hash: string;
   policy_version: string;
   evidence: string[];
+  // Where the data behind this request came from. Not part of the hash: approvals bind to the
+  // change itself, and this only describes it.
+  provenance?: Provenance;
   required_approvals: number;
   // Code remediations never touch a real system: they are applied to an isolated copy.
   execution: 'live' | 'simulated';
@@ -205,7 +209,7 @@ async function execute(cr: ChangeRequest, approver: string): Promise<void> {
   await audit().append(approver, `change.${cr.state}`, cr.id, { kind: cr.kind, target: cr.target, hash: cr.hash, result: cr.result });
 }
 
-export async function propose(input: { kind: ChangeKind; title: string; requester: string; risk: Risk; target: string; payload: Record<string, unknown>; evidence?: string[]; now?: Date }): Promise<ChangeRequest> {
+export async function propose(input: { kind: ChangeKind; title: string; requester: string; risk: Risk; target: string; payload: Record<string, unknown>; evidence?: string[]; provenance?: Provenance; now?: Date }): Promise<ChangeRequest> {
   return exclusive(async () => {
     const now = input.now ?? new Date();
     const payload = { ...input.payload };
@@ -224,6 +228,7 @@ export async function propose(input: { kind: ChangeKind; title: string; requeste
       hash: changeHash(input.kind, input.target, payload),
       policy_version: POLICY.version,
       evidence: input.evidence ?? [],
+      ...(input.provenance ? { provenance: input.provenance } : {}),
       required_approvals: POLICY.approvals[input.risk],
       execution: input.kind === 'remediation' ? 'simulated' : 'live',
       decisions: [],

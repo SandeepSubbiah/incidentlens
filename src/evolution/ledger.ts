@@ -27,6 +27,8 @@ export async function recordOpportunities(incidentId: string, runFile: string, e
   const start = events.find((e) => e.type === 'start');
   if (!start || start.synthetic) return [];
   const evidence = `runs/${incidentId}/${runFile}`;
+  // From the run's start event; absent on records made before provenance was recorded.
+  const provenance = start.provenance ?? null;
   const added: AuditEntry[] = [];
 
   const failovers = events.filter((e) => e.type === 'heal' && FAILOVER.has(e.kind));
@@ -36,8 +38,9 @@ export async function recordOpportunities(incidentId: string, runFile: string, e
         category: 'reliability',
         signal: 'model-failover',
         // A chaos outage is a rehearsal, not a production fault; say which this was.
-        simulated: failovers.some((e) => /\(chaos\)/.test(String(e.detail))),
+        simulated: failovers.some((e) => /\(chaos\)/.test(String(e.detail))) || !!provenance?.simulated_faults?.length,
         occurrences: failovers.length,
+        provenance,
         first: String(failovers[0].detail).slice(0, 200),
         circuit_opened: failovers.some((e) => e.kind === 'circuit-open'),
         outcome: outcome(events),
@@ -54,8 +57,10 @@ export async function recordOpportunities(incidentId: string, runFile: string, e
       await ledger().append('guard', 'opportunity.security', evidence, {
         category: 'security',
         signal: 'prompt-injection-quarantined',
-        simulated: false,
+        // An injection inside an authored test incident was planted on purpose. Unknown stays null.
+        simulated: provenance ? provenance.incident !== 'imported' : null,
         occurrences: quarantined.length,
+        provenance,
         lines: quarantined.slice(0, 5).map((q) => `${q.artifact}:${q.line}`),
         outcome: outcome(events),
         proposal: 'Add these lines to the injection regression corpus and confirm the diagnosis ignored them.',

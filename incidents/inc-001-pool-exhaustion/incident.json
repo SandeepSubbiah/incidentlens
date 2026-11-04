@@ -3,6 +3,7 @@
   "title": "Checkout failing with 5xx, p99 latency above 30s",
   "service": "payment-service",
   "severity": "SEV-1",
+  "provenance": "synthetic",
   "started_at": "2026-10-28T14:09:00Z",
   "alert": "PagerDuty: checkout-api error rate 38% (threshold 2%) and p99 latency 31.4s (threshold 2s) for 6 minutes. Upstream: payment-service. Customer support reports card payments spinning then failing.",
   "updates": [

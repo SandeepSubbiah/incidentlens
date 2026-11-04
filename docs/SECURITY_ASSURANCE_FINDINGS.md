@@ -245,7 +245,7 @@ From the execution prompt's catalog, with the reason each is untested:
 | Access usage | `data/access-usage.json` | Runs spent per code | No revocation |
 | Evaluation | `eval/latest*.json` | Scores, citation counts, per incident | Keyword scoring (SF-12) |
 | Security pack | `eval/sentinel/smoke-latest.json` | Commit, dirty flag, Node version, every scenario's result and observation | Offline and deterministic only |
-| Tests | CI on every push | 65 tests | No live model in CI |
+| Tests | CI on every push | 69 tests | No live model in CI |
 
 **Not recorded at all:**
 - HTTP access, so who read what is unknown;

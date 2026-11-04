@@ -67,7 +67,7 @@ there was nothing left to fail over to.
 
 | Check | Result |
 |---|---|
-| `npm test` | 65 of 65, including 5 continuity tests (outage, control, dropped connection, security entry, governance untouched and tampering detected) |
+| `npm test` | 65 of 65 at the time (69 with the provenance tests), including 5 continuity tests (outage, control, dropped connection, security entry, governance untouched and tampering detected) |
 | Mutation check | Removing the ledger hook makes the outage test fail |
 | `npm run sentinel:smoke` | Unchanged: 15 PASS, 6 FAIL (the open findings), 0 ERROR |
 | Plan B walkthrough in Chrome | 19 of 19 |

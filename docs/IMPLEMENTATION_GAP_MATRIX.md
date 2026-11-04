@@ -38,6 +38,7 @@ that morning the API returned `402 billing_not_configured`.
 | Model failover Wonder→Spark, circuit breaker, recovery, served-model record | Implemented + verified; **live**: injected Wonder outage, run completed on Spark, recovery after cooldown (n = 1, CONTINUITY_DEMO.md) | `continuity-demo.test.ts`, `reflexes.test.ts` |
 | Evolution Ledger (faults become hash-chained improvement proposals) | Implemented + verified; proposal-only, no governance side effects | `continuity-demo.test.ts` |
 | Streamed-response recovery, multi-instance HA, zero-downtime deploys | **Missing** | |
+| Provenance labels (synthetic incident, live Muse or scripted model, simulated faults) on runs, replays, change requests, ledger entries, seeded runs, evaluation summaries and the UI | Implemented + verified; **live**: one Muse run stamped `synthetic · live · api.meta.ai`; older records show "source not recorded" | `provenance.test.ts` |
 | Access-code revocation | **Missing** | |
 | UI: solo, War Room, health, governance | Implemented; checked with Playwright scripts outside CI, offline and live (replay of a live War Room run, one live solo run). Responsive from 320px phones to 3840px monitors: no horizontal scroll at 11 widths, no text under 12px, 44px touch targets on phones (measured 2026-11-04) | |
 | Offline demo mode | Implemented + smoke-tested | `scripts/offline-demo.ts` |

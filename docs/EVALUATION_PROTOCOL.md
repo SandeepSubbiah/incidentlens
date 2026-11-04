@@ -5,7 +5,7 @@ What is measured today, how, and what is not yet measured. The first live Muse r
 
 ## Layer 1 — Deterministic tests (implemented, run in CI)
 
-`npm test` runs 65 tests with no network access and no API key. Models are scripted stand-ins,
+`npm test` runs 69 tests with no network access and no API key. Models are scripted stand-ins,
 so these tests measure IncidentLens's own machinery, not model quality.
 
 | Area | Test file | Includes negative controls |

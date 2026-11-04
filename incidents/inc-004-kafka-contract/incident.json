@@ -3,6 +3,7 @@
   "title": "Inventory not reserved, items oversold since afternoon deploy",
   "service": "inventory-service",
   "severity": "SEV-2",
+  "provenance": "synthetic",
   "started_at": "2026-11-01T15:32:00Z",
   "alert": "Prometheus: kafka_consumergroup_lag{group=\"inventory-reservations\",topic=\"orders.placed.v1\"} > 5000 for 20m. Merchandising reports 140 orders accepted for out-of-stock SKUs. inventory-service pods healthy, CPU normal."
 }
