@@ -173,7 +173,7 @@ More: [feature status](docs/FEATURE_STATUS.md), [continuity prototype](docs/CONT
 [self-evolution](docs/SELF_EVOLUTION.md), [evaluation protocol](docs/EVALUATION_PROTOCOL.md),
 [Sentinel gap matrix](docs/SENTINEL_GAP_MATRIX.md), [decisions](docs/DECISION_LOG.md),
 [threat model](docs/THREAT_MODEL.md), [roadmap](docs/ROADMAP.md) (issues #1–#16),
-[demo script](docs/DEMO_SCRIPT_3_MIN.md).
+[demo script](docs/DEMO_SCRIPT_3_MIN.md), and [SEO/discoverability guidance](docs/SEO_DISCOVERABILITY.md).
 
 ## License
 
