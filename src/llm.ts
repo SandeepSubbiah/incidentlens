@@ -35,6 +35,13 @@ export const PRICING: Record<string, { input: number; cached: number; output: nu
   'muse-spark-1.3-contributor': { input: 0.1, cached: 0.002, output: 0.2 },
 };
 
+// Estimated USD for one model's tokens at Meta's published prices; 0 for models without a price
+// (scripted stand-ins). The Meta Model API exposes no billing endpoint, so this is the only source.
+export function priceOf(model: string, m: { input: number; cached: number; output: number }): number {
+  const p = PRICING[model];
+  return p ? ((m.input - m.cached) * p.input + m.cached * p.cached + m.output * p.output) / 1e6 : 0;
+}
+
 export class Usage {
   byModel: Record<string, { input: number; cached: number; output: number; calls: number; served?: string }> = {};
 
@@ -59,10 +66,7 @@ export class Usage {
 
   get cost(): number {
     let usd = 0;
-    for (const [model, m] of Object.entries(this.byModel)) {
-      const p = PRICING[model];
-      if (p) usd += ((m.input - m.cached) * p.input + m.cached * p.cached + m.output * p.output) / 1e6;
-    }
+    for (const [model, m] of Object.entries(this.byModel)) usd += priceOf(model, m);
     return Math.round(usd * 10000) / 10000;
   }
 }

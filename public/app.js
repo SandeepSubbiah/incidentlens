@@ -82,6 +82,9 @@ async function init() {
     if (b) select(b.dataset.id);
   });
   $('#nav-health').addEventListener('click', showHealth);
+  $('#nav-costs').addEventListener('click', showCosts);
+  $('#spend').addEventListener('click', showCosts);
+  renderSpend();
   document.querySelectorAll('.tabs button').forEach((b) => b.addEventListener('click', () => showTab(b.dataset.tab)));
   $('#access-cancel').addEventListener('click', () => $('#access-dialog').close());
   $('#access-form').addEventListener('submit', signIn);
@@ -142,6 +145,7 @@ async function renderScoreboard() {
 function markNav(id) {
   document.querySelectorAll('#incidents button').forEach((b) => b.setAttribute('aria-current', String(b.dataset.id === id)));
   $('#nav-health').setAttribute('aria-current', String(id === 'health'));
+  $('#nav-costs').setAttribute('aria-current', String(id === 'costs'));
 }
 
 async function select(id) {
@@ -162,6 +166,7 @@ async function select(id) {
         <button class="btn" id="run">Investigate</button>
         <button class="btn secondary" id="replay" hidden>Replay recorded run</button>
         <span class="status" id="status"></span>
+        <span class="status" id="runcost"></span>
       </div>
     </div>
     <div id="replay-note"></div>
@@ -209,6 +214,7 @@ function reset() {
   state.facts = [];
   state.quarantined = 0;
   state.provenance = undefined;
+  if ($('#runcost')) $('#runcost').textContent = '';
   state.rejected = 0;
   hyps.clear();
   $('#trail').innerHTML = `<ol class="steps" id="steps"></ol>`;
@@ -231,7 +237,54 @@ async function runLive(id) {
     if (state.current?.id === id) setBusy(false);
     state.session = (await getJson('/api/session')) ?? state.session;
     renderHeader();
+    renderSpend();
   }
+}
+
+/* Usage and cost. Estimates only: the Meta Model API has no billing or balance endpoint. */
+const usd = (n) => `$${Number(n ?? 0).toFixed(n >= 100 ? 2 : 3)}`;
+
+async function renderSpend() {
+  const c = await getJson('/api/costs');
+  const chip = $('#spend');
+  if (!c || !chip) return;
+  chip.textContent = `Today ${usd(c.periods.today.usd)}${c.remaining_usd != null ? ` · est. ${usd(c.remaining_usd)} of ${usd(c.budget_usd)} left` : ''}`;
+  chip.hidden = false;
+}
+
+async function showCosts() {
+  state.abort?.abort();
+  state.current = null;
+  markNav('costs');
+  $('#trail').innerHTML = `<p class="hint">Spend is recorded per run. Open an incident to see its running cost.</p>`;
+  showTab('trail');
+  const c = await getJson('/api/costs');
+  if (!c) return;
+  const row = (label, b) => `<tr><td>${esc(label)}</td><td class="num">${usd(b.usd)}</td><td class="num">${b.operations}</td><td class="num">${b.calls}</td></tr>`;
+  const table = (title, list) => `<section class="card"><h2 class="section-title">${title}</h2>${list.length ? `<div class="table-scroll"><table class="ind"><thead><tr><th>Period</th><th>Spend</th><th>Operations</th><th>Model calls</th></tr></thead><tbody>${list.map((b) => row(b.period, b)).join('')}</tbody></table></div>` : '<p class="hint">Nothing recorded yet.</p>'}</section>`;
+  const p = c.periods;
+  const inference = { live: 'live Meta API', scripted: 'scripted model, not Muse', 'not recorded': 'recorded before provenance labels' };
+  const prices = Object.entries(c.pricing_per_million_tokens).filter(([m]) => !/contributor/.test(m)).map(([m, x]) => `${esc(m)} $${x.input} in / $${x.output} out`).join(' · ');
+  $('#case').innerHTML = `<div class="alert-head"><span class="inc-meta">Meta Model API · ${esc(c.endpoint.host)}${c.endpoint.live ? ' · live' : ' · scripted endpoint, not Muse'}</span><h1>Usage and cost</h1>
+    <p class="alert-text">Model spend that IncidentLens recorded: every investigation (including evaluations), the self-repair Doctor and its canary validations. Figures are <strong>estimates</strong> from token counts at Meta's published prices per million tokens (${prices}). The Meta Model API offers no billing or balance endpoint, so <strong>Meta's billing page is authoritative</strong>, and anything else using the same API key is not counted here.</p></div>
+    <div id="cost-body">
+    <section class="card"><h2 class="section-title">Credit</h2>
+      ${c.remaining_usd != null ? `<p><span class="headline-num">${usd(c.remaining_usd)}</span> estimated remaining of ${usd(c.budget_usd)} (budget minus all spend recorded here)</p>` : `<p class="hint">Set <code>CREDIT_BUDGET_USD</code> (for example 150) before <code>npm start</code> to estimate the remaining credit.</p>`}
+      <p class="hint">Times are in ${esc(c.time_zone)}. Weeks start on Monday. ${c.excluded.synthetic_runs ? `${c.excluded.synthetic_runs} seeded synthetic runs made no model calls and are excluded.` : ''}</p>
+    </section>
+    <section class="card"><h2 class="section-title">Spend by period</h2><div class="table-scroll"><table class="ind"><thead><tr><th>Period</th><th>Spend</th><th>Operations</th><th>Model calls</th></tr></thead><tbody>
+      ${row('Today', p.today)}${row('This week', p.week)}${row('This month', p.month)}${row('This quarter', p.quarter)}${row('This half-year', p.half)}${row('This year', p.year)}${row('All recorded', p.all)}
+    </tbody></table></div></section>
+    <section class="card"><h2 class="section-title">By model</h2>${c.by_model.length ? `<div class="table-scroll"><table class="ind"><thead><tr><th>Requested</th><th>Answered by (API)</th><th>Calls</th><th>Spend</th></tr></thead><tbody>${c.by_model.map((m) => `<tr><td class="num">${esc(m.model)}</td><td class="num">${m.served.length ? esc(m.served.join(', ')) : '<span class="hint">not recorded</span>'}</td><td class="num">${m.calls}</td><td class="num">${usd(m.usd)}</td></tr>`).join('')}</tbody></table></div>` : '<p class="hint">Nothing recorded yet.</p>'}</section>
+    <section class="card"><h2 class="section-title">By operation and source</h2><div class="table-scroll"><table class="ind"><tbody>
+      ${Object.entries(c.by_kind).map(([k, b]) => row(k, b)).join('')}
+      ${Object.entries(c.by_inference).map(([k, b]) => row(inference[k] ?? k, b)).join('')}
+    </tbody></table></div></section>
+    ${table('By month', c.by_month)}${table('By quarter', c.by_quarter)}${table('By half-year', c.by_half)}${table('By year', c.by_year)}
+    <section class="card span-2"><h2 class="section-title">Recent operations</h2><div class="table-scroll"><table class="ind"><thead><tr><th>When</th><th>Operation</th><th>Models (answered by)</th><th>Source</th><th>Spend</th></tr></thead><tbody>
+      ${c.recent.map((i) => `<tr><td class="num">${esc(new Date(i.at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }))}</td><td>${esc(i.kind)}${i.mode ? ` · ${esc(i.mode)}` : ''}${i.incident ? ` · ${esc(i.incident.replace(/^inc-/, ''))}` : ''}</td><td class="num">${Object.entries(i.models).map(([m, u]) => `${esc(u.served ?? m)} ×${u.calls}`).join(', ') || '—'}</td><td>${esc(({ live: 'live', scripted: 'scripted', 'not recorded': 'not recorded' })[i.inference] ?? i.inference)}</td><td class="num">${usd(i.cost_usd)}</td></tr>`).join('')}
+    </tbody></table></div></section>
+    </div>`;
 }
 
 async function replayRun(id, run) {
@@ -330,7 +383,9 @@ function handle(e, id, isReplay = false) {
       line(roleTag(e.role), `<span class="thought">${esc(e.text.slice(0, 400))}</span>`);
       break;
     case 'step':
-      line(roleTag(e.role), `<span class="${e.error ? 'err' : ''}">${esc(e.label)}</span>`, ms(e));
+      // Every model request names the model that made it.
+      line(roleTag(e.role), `<span class="${e.error ? 'err' : ''}">${esc(e.label)}</span>${e.model ? ` <span class="via">${esc(e.model)}</span>` : ''}`, ms(e));
+      if (e.cost_usd !== undefined && $('#runcost')) $('#runcost').textContent = `Model spend in this run so far: $${e.cost_usd.toFixed(3)} (estimate)`;
       break;
     case 'assign':
     case 'resume': {
@@ -413,6 +468,7 @@ function handle(e, id, isReplay = false) {
     case 'report':
       for (const r of ROLES) setLane(r, 'idle');
       renderReport(e, isReplay);
+      if (!isReplay) renderSpend();
       break;
     case 'error':
       $('#result').insertAdjacentHTML('beforeend', `<div class="notice bad">${esc(e.message)}</div>`);

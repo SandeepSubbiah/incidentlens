@@ -16,7 +16,7 @@ not appear in your run, skip it rather than describe it.
    cd incidentlens                 # your clone
    git checkout main
    git pull --ff-only
-   npm test                        # expect 103 of 103
+   npm test                        # expect 106 of 106
    $env:MODEL_API_KEY = [Environment]::GetEnvironmentVariable("MODEL_API_KEY", "User")
    npm start
    ```
@@ -110,10 +110,10 @@ Plan B only scripts inc-001.
   > audited."
 
 **2:45–3:00 — Close.**
-- **Plan A:** "Open source, 103 automated tests. On live Muse, it diagnosed all five of our test
+- **Plan A:** "Open source, 106 automated tests. On live Muse, it diagnosed all five of our test
   incidents correctly in solo mode, with every cited quote verified. Evidence first, humans in
   charge." Only say this if the numbers in `docs/EVALUATION_PROTOCOL.md` still say so.
-- **Plan B:** "Open source, 103 automated tests. It is built for Muse Wonder and Muse Spark; this
+- **Plan B:** "Open source, 106 automated tests. It is built for Muse Wonder and Muse Spark; this
   recording used a scripted model. Evidence first, humans in charge."
 
 ## Optional: continuity beat (Plan A, about 20 seconds)

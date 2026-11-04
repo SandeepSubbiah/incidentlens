@@ -40,6 +40,7 @@ Supporting documents: [evaluation](EVALUATION_PROTOCOL.md), [live failover demo]
 | Continuity | Same-provider Wonder→Spark failover with breaker/cost limits | Live Muse with simulated outage | `src/llm.ts` | Only between complete calls; single application instance |
 | Continuity | Separate provider-neutral policy-based router | **Prototype, not integrated** | `src/continuity/router.ts`, tests, PR #22 | No live Muse adapter, cross-provider production routing or streaming recovery |
 | Continuity | Timeout, callback isolation, half-open lease, stale result generation, safe retry checks | Tested **in isolated router** | `test/continuity*.test.ts` | No durable, cross-instance breaker or side-effect journal |
+| Cost | Model spend per run (live, per step), per model, and by day, week, month, quarter, half-year and year; estimated remaining credit | Tested and live observed | `src/costs.ts`, `test/costs.test.ts`, **Usage and cost** page | Estimates from token counts at published prices; no Meta billing API; spend from other tools using the same key is not counted |
 | Monitoring | IncidentLens health metrics, audit integrity, evolution opportunities | Partial | `src/heal/`, `src/guard/`, continuity demo | No enterprise telemetry backend or multi-instance HA |
 | Security | Injection-pattern alert and read-only investigation tools | Tested | `src/guard/`, `src/tools.ts` | Not a comprehensive prompt-injection defense |
 | Security | Deterministic Sentinel smoke checks | Partial | `npm run sentinel:smoke` | Six known failed scenarios in last documented run |

@@ -9,6 +9,7 @@ import { getRegistry, lineDiff, type Registry } from '../skills/registry.ts';
 import { ARTIFACT_TOOLS, SUBMIT_TOOL, type ToolDef } from '../tools.ts';
 import { propose } from '../governance/changes.ts';
 import { provenanceNow } from '../provenance.ts';
+import { recordSpend } from '../costs.ts';
 import { verifyEvidence } from '../verify.ts';
 import { health as currentHealth, type Health, type RunSummary } from './health.ts';
 
@@ -51,6 +52,8 @@ export const validateWithCanaries: Validator = async (skill, content, canaries, 
   for (const id of canaries) {
     const events = await investigate(id, () => {}, { view, record: false });
     const report = events.find((e) => e.type === 'report');
+    // Canary runs are not recorded as runs, so their model spend goes to the spend ledger.
+    await recordSpend('canary', report?.stats?.models ?? events.find((e) => e.type === 'error')?.usage?.models ?? {}, { incident: id });
     results.push({
       incident: id,
       baseline_correct: baseline[id] ?? null,
@@ -249,6 +252,7 @@ async function diagnose(caseId: string, h: Health, reg: Registry, send: Emit, va
       result = { type: 'doctor', phase: 'done', action: 'proposed', skill: r.skill, change: cr.id };
       return { done: true };
     },
-  });
+    // The Doctor's own model calls leave no run record; log their spend even when diagnosis fails.
+  }).finally(() => recordSpend('self-repair', usage.byModel));
   return result ?? { type: 'doctor', phase: 'done', action: 'none', detail: 'doctor finished without an action' };
 }

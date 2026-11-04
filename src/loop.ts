@@ -63,10 +63,10 @@ export async function runToolLoop(o: LoopOptions): Promise<{ steps: number }> {
       try {
         const r = await runTool(o.ctx, call.name, call.args);
         results.push({ id: call.id, output: r.output });
-        o.send({ type: 'step', n: steps, tool: call.name, args: call.args, label: r.label, ms: Date.now() - t0, model: turn.model });
+        o.send({ type: 'step', n: steps, tool: call.name, args: call.args, label: r.label, ms: Date.now() - t0, model: turn.model, cost_usd: o.usage.cost });
       } catch (err: any) {
         results.push({ id: call.id, output: `Error: ${err.message}` });
-        o.send({ type: 'step', n: steps, tool: call.name, args: call.args, label: `${call.name} failed`, ms: Date.now() - t0, error: err.message, model: turn.model });
+        o.send({ type: 'step', n: steps, tool: call.name, args: call.args, label: `${call.name} failed`, ms: Date.now() - t0, error: err.message, model: turn.model, cost_usd: o.usage.cost });
       }
     }
     session.addToolResults(results);

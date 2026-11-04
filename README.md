@@ -8,7 +8,7 @@ agrees on a root cause. Nothing an agent claims is taken on trust: every quote i
 the source, every patch is applied to an isolated copy, and every change, including changes
 IncidentLens makes to itself, goes through a governance gate that the AI cannot approve or bypass.
 
-> **Status, 2026-11-04.** The core system and the merged continuity prototype are covered by **103 automated tests**
+> **Status, 2026-11-04.** The core system and the merged continuity prototype are covered by **106 automated tests**
 > (GitHub Actions passes on `main`). These tests use scripted models or deterministic
 > stubs; the separate recorded live Muse evaluation is described below. **First live Muse evaluation,
 > 2026-11-04**, on `muse-wonder-1.0` and `muse-spark-1.3`, one run per incident:
@@ -56,7 +56,12 @@ IncidentLens makes to itself, goes through a governance gate that the AI cannot 
    wait for human approval. Approved versions go live on the next run with no restart. The
    Doctor can only change skills (prompts and runbooks), never its constitution, verifier,
    policies, tools, scoring or code.
-6. **Keeps working when a model fails.** If Muse Wonder fails, calls fail over to Muse Spark and a
+6. **Shows what every run costs.** The top bar shows today's model spend and, with
+   `CREDIT_BUDGET_USD` set, an estimated remaining credit. During a run the spend so far updates
+   on every step, and each step names the model that made it. **Usage and cost** breaks spend
+   down by today, week, month, quarter, half-year, year and model. These are estimates from token
+   counts at Meta's published prices, because the Meta Model API has no billing endpoint.
+7. **Keeps working when a model fails.** If Muse Wonder fails, calls fail over to Muse Spark and a
    circuit breaker routes around Wonder until it recovers. The report names the model that
    actually answered, and each failover or quarantined injection becomes a hash-chained Evolution
    Ledger entry that proposes an improvement. Shown live with an injected outage:
@@ -85,10 +90,11 @@ cd incidentlens
 cd incidentlens                 # your clone
 git checkout main
 git pull --ff-only
-npm test                        # 103 tests, no API key needed
+npm test                        # 106 tests, no API key needed
 
 # Live Muse: read the key from your Windows user environment into this window, then start.
 $env:MODEL_API_KEY = [Environment]::GetEnvironmentVariable("MODEL_API_KEY", "User")
+$env:CREDIT_BUDGET_USD = "150"     # optional: your Meta credit, for the remaining-balance estimate
 npm start                       # http://localhost:5173
 ```
 
@@ -100,7 +106,7 @@ works today, with evidence and limits.
 **All commands:**
 
 ```powershell
-npm test                 # 103 tests: verifier, War Room, governance, self-repair, access, guards, security, continuity, provenance
+npm test                 # 106 tests: verifier, War Room, governance, self-repair, access, guards, security, continuity, provenance
 npm run demo:offline     # full UI with a scripted model (no API key; inc-001 only), http://localhost:5173
 npm start                # live, with Muse: needs MODEL_API_KEY and working Meta billing
 npm run eval             # score solo mode on all incidents (add --warroom for War Room mode)
@@ -120,6 +126,7 @@ keeps its state in `data-offline-demo/` and `runs-offline-demo/`.
 | `WARROOM_MAX_COST_USD` | `3` | Per-investigation budget; when reached, the Commander must conclude |
 | `ACCESS_SECRET` | | 32+ characters. Turns on access codes for live runs |
 | `HOST` | `127.0.0.1` without a secret | The server refuses to listen beyond loopback without `ACCESS_SECRET` unless `INCIDENTLENS_DEV_OPEN=1` |
+| `CREDIT_BUDGET_USD` | | Your Meta credit (for example `150`). The top bar and **Usage and cost** page then show an *estimated* remaining balance: this budget minus the spend IncidentLens recorded. Meta's billing page is authoritative |
 
 Access codes for a hosted demo: `ACCESS_SECRET=... npm run mint-token -- --name judge-1 --days 7 --runs 20`
 (add `--role admin` for self-repair, fault injection and approvals). Recorded runs and read-only

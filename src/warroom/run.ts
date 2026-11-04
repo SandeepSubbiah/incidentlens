@@ -236,7 +236,7 @@ export async function runWarRoom(incidentId: string, emit: Emit, opts: WarRoomOp
       const t0 = Date.now();
       toolCalls++;
       const log = (label: string, error?: string) =>
-        send({ type: 'step', n: toolCalls, role: a.role, task: t.id, tool: call.name, args: Object.fromEntries(Object.entries(args).filter(([k]) => ARG_KEYS.includes(k))), label, ms: Date.now() - t0, model, ...(error ? { error } : {}) });
+        send({ type: 'step', n: toolCalls, role: a.role, task: t.id, tool: call.name, args: Object.fromEntries(Object.entries(args).filter(([k]) => ARG_KEYS.includes(k))), label, ms: Date.now() - t0, model, cost_usd: usage.cost, ...(error ? { error } : {}) });
       const fail = (label: string, output: string) => {
         log(label, output);
         return { output: `Error: ${output}`, done: false };

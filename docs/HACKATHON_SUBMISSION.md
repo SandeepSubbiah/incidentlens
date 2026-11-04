@@ -58,7 +58,7 @@ explicit (approvals bound to the exact change, veto, expiry, kill switch).
   authored test cases), **live Muse** or **scripted model, not Muse**, and any **simulated
   fault**. Change requests, Evolution Ledger entries, replays and evaluation scores carry the
   same labels. Records made before these labels existed say "source not recorded", never "real".
-- Core functionality and the separately tested continuity prototype covered by **103 automated tests** in the merged PR #22 CI run: verification, the War Room scheduler,
+- Core functionality and the separately tested continuity prototype covered by **106 automated tests** in the merged PR #22 CI run: verification, the War Room scheduler,
   governance, self-repair, retrieval, access control and the guards.
 - **Live Muse results (2026-11-04, one run per incident).**
   - Solo (`muse-wonder-1.0`): 5 of 5 root causes correct, 5 of 5 fix targets, 51 of 51
@@ -97,7 +97,7 @@ GitHub Actions.
 ## Try it
 ```
 git clone https://github.com/SandeepSubbiah/incidentlens && cd incidentlens
-npm test               # 103 tests, no key needed
+npm test               # 106 tests, no key needed
 npm run demo:offline   # full UI with a scripted model, http://localhost:5173
 npm start              # live, with MODEL_API_KEY set; then open /capabilities.html
 ```
