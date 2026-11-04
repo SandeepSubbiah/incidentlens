@@ -13,7 +13,10 @@ import { getRegistry } from '../skills/registry.ts';
 
 export type Risk = 'A0' | 'A1' | 'A2' | 'A3' | 'A4';
 export type ChangeKind = 'skill-change' | 'skill-rollback' | 'remediation';
-export type ChangeState = 'awaiting_approval' | 'completed' | 'failed' | 'denied' | 'vetoed' | 'expired';
+// executing: the start of execution is recorded before anything runs (write-ahead).
+// rolled_back: execution failed after a partial commit and the previous state was restored.
+// recovery_incomplete: execution was interrupted or its compensation failed; needs a human.
+export type ChangeState = 'awaiting_approval' | 'executing' | 'completed' | 'failed' | 'rolled_back' | 'recovery_incomplete' | 'denied' | 'vetoed' | 'expired';
 export type DecisionKind = 'approve' | 'reject' | 'veto';
 
 export interface Actor {
@@ -45,6 +48,8 @@ export interface ChangeRequest {
   // Code remediations never touch a real system: they are applied to an isolated copy.
   execution: 'live' | 'simulated';
   decisions: Decision[];
+  // Open requests for the same target at proposal time.
+  conflicts: string[];
   state: ChangeState;
   rule?: string;
   created_at: string;
@@ -82,8 +87,23 @@ function exclusive<T>(fn: () => Promise<T>): Promise<T> {
   return next;
 }
 
+let recovered = false;
+
 async function load(): Promise<ChangeRequest[]> {
-  return JSON.parse(await readFile(file(), 'utf8').catch(() => '[]'));
+  const all: ChangeRequest[] = JSON.parse(await readFile(file(), 'utf8').catch(() => '[]'));
+  // A request still marked "executing" when a process starts was interrupted mid-execution.
+  // It is never re-run automatically: its side effects may have partly happened.
+  if (!recovered) {
+    recovered = true;
+    const interrupted = all.filter((c) => c.state === 'executing');
+    for (const c of interrupted) {
+      c.state = 'recovery_incomplete';
+      c.rule = 'R8: execution was interrupted by a restart; it was not re-run; verify the target and resolve manually';
+      await audit().append('governance', 'change.recovery_incomplete', c.id, { reason: 'interrupted execution found at startup' });
+    }
+    if (interrupted.length) await save(all);
+  }
+  return all;
 }
 
 async function save(all: ChangeRequest[]) {
@@ -100,13 +120,17 @@ export async function killSwitch(): Promise<{ on: boolean; by?: string; at?: str
   return JSON.parse(await readFile(killFile(), 'utf8').catch(() => '{"on":false}'));
 }
 
+// Serialized with decisions, so a switch that lands while an approval is executing takes
+// effect after it, and every later decision sees it.
 export async function setKillSwitch(on: boolean, actor: Actor, reason: string) {
   if (actor.role !== 'admin') throw new GovernanceError('R-ROLE', 'only an admin can change the kill switch');
-  await mkdir(path.dirname(killFile()), { recursive: true });
-  const state = { on, by: actor.sub, at: new Date().toISOString(), reason };
-  await writeFile(killFile(), JSON.stringify(state));
-  await audit().append(actor.sub, on ? 'governance.kill.on' : 'governance.kill.off', 'kill-switch', { reason });
-  return state;
+  return exclusive(async () => {
+    await mkdir(path.dirname(killFile()), { recursive: true });
+    const state = { on, by: actor.sub, at: new Date().toISOString(), reason };
+    await writeFile(killFile(), JSON.stringify(state));
+    await audit().append(actor.sub, on ? 'governance.kill.on' : 'governance.kill.off', 'kill-switch', { reason });
+    return state;
+  });
 }
 
 export async function listChanges(limit = 30): Promise<ChangeRequest[]> {
@@ -117,14 +141,52 @@ export async function getChange(id: string): Promise<ChangeRequest | undefined> 
   return (await load()).find((c) => c.id === id);
 }
 
+async function executeSkillChange(cr: ChangeRequest, approver: string): Promise<void> {
+  const reg = await getRegistry();
+  const p = cr.payload as { skill: string; content: string; rationale: string; base_version?: number };
+  const before = reg.view().get(p.skill)?.version;
+  // Optimistic concurrency: the change was built on base_version; if that is no longer live,
+  // applying it would silently discard whatever changed in between.
+  if (p.base_version !== undefined && before !== p.base_version) {
+    cr.state = 'denied';
+    cr.rule = `R7: ${p.skill} changed since this request was made (built on v${p.base_version}, live is v${before}); propose again against the live version`;
+    cr.result = { conflict: { base_version: p.base_version, live_version: before } };
+    return;
+  }
+  let added: number | undefined;
+  try {
+    added = await reg.addVersion(p.skill, p.content, cr.requester, p.rationale);
+    await reg.activate(p.skill, added, `human:${approver}`, `approved ${cr.id}`);
+    const live = reg.view().get(p.skill)?.version;
+    if (live !== added) throw new Error(`postcondition failed: v${live} is live, expected v${added}`);
+    cr.state = 'completed';
+    cr.result = { skill: p.skill, version: added };
+  } catch (err: any) {
+    const live = reg.view().get(p.skill)?.version;
+    if (live === before) {
+      // Failed before the commit point: an added version, if any, is stored but inert.
+      cr.state = 'failed';
+      cr.result = { error: err.message, live_version: live, inert_version: added ?? null };
+      return;
+    }
+    // Failed after the commit point: restore what was live before.
+    try {
+      await reg.activate(p.skill, before!, 'governance:compensation', `restore after failed ${cr.id}`);
+      cr.state = 'rolled_back';
+      cr.rule = `R9: execution failed after a partial commit (${err.message}); restored v${before}`;
+      cr.result = { error: err.message, restored_version: before };
+    } catch (compensationErr: any) {
+      cr.state = 'recovery_incomplete';
+      cr.rule = `R9: execution failed after a partial commit and restoring v${before} also failed; v${live} is live; needs a human`;
+      cr.result = { error: err.message, compensation_error: compensationErr.message, live_version: live };
+    }
+  }
+}
+
 async function execute(cr: ChangeRequest, approver: string): Promise<void> {
   try {
     if (cr.kind === 'skill-change') {
-      const reg = await getRegistry();
-      const p = cr.payload as { skill: string; content: string; rationale: string };
-      const v = await reg.addVersion(p.skill, p.content, cr.requester, p.rationale);
-      await reg.activate(p.skill, v, `human:${approver}`, `approved ${cr.id}`);
-      cr.result = { skill: p.skill, version: v };
+      await executeSkillChange(cr, approver);
     } else if (cr.kind === 'skill-rollback') {
       const reg = await getRegistry();
       const p = cr.payload as { skill: string; reason: string };
@@ -134,7 +196,7 @@ async function execute(cr: ChangeRequest, approver: string): Promise<void> {
       const p = cr.payload as { incident: string; artifact: string; patch: string };
       cr.result = { mode: 'simulated', note: 'applied to an isolated copy of the artifact; no real system was touched', ...(await sandboxApply(p.incident, p)) };
     }
-    cr.state = cr.kind === 'remediation' && cr.result.status === 'failed' ? 'failed' : 'completed';
+    if (cr.kind !== 'skill-change') cr.state = cr.kind === 'remediation' && cr.result!.status === 'failed' ? 'failed' : 'completed';
   } catch (err: any) {
     cr.state = 'failed';
     cr.result = { error: err.message };
@@ -146,6 +208,11 @@ async function execute(cr: ChangeRequest, approver: string): Promise<void> {
 export async function propose(input: { kind: ChangeKind; title: string; requester: string; risk: Risk; target: string; payload: Record<string, unknown>; evidence?: string[]; now?: Date }): Promise<ChangeRequest> {
   return exclusive(async () => {
     const now = input.now ?? new Date();
+    const payload = { ...input.payload };
+    if (input.kind === 'skill-change' && payload.base_version === undefined) {
+      payload.base_version = (await getRegistry()).view().get(String(payload.skill))?.version;
+    }
+    const open = (await load()).filter((c) => c.target === input.target && (c.state === 'awaiting_approval' || c.state === 'executing'));
     const cr: ChangeRequest = {
       id: `CR-${now.getTime().toString(36)}-${randomBytes(2).toString('hex')}`,
       kind: input.kind,
@@ -153,13 +220,14 @@ export async function propose(input: { kind: ChangeKind; title: string; requeste
       requester: input.requester,
       risk: input.risk,
       target: input.target,
-      payload: input.payload,
-      hash: changeHash(input.kind, input.target, input.payload),
+      payload,
+      hash: changeHash(input.kind, input.target, payload),
       policy_version: POLICY.version,
       evidence: input.evidence ?? [],
       required_approvals: POLICY.approvals[input.risk],
       execution: input.kind === 'remediation' ? 'simulated' : 'live',
       decisions: [],
+      conflicts: open.map((c) => c.id),
       state: 'awaiting_approval',
       created_at: now.toISOString(),
       expires_at: new Date(now.getTime() + POLICY.ttl_minutes[input.risk] * 60_000).toISOString(),
@@ -216,6 +284,10 @@ export async function decide(id: string, actor: Actor, decision: DecisionKind, r
       const approvers = new Set(cr.decisions.filter((d) => d.decision === 'approve' && d.actor !== cr.requester).map((d) => d.actor));
       if (approvers.size >= cr.required_approvals) {
         cr.rule = `R6: ${approvers.size} of ${cr.required_approvals} required approvals`;
+        // Write-ahead: record that execution started before anything runs, so a crash
+        // mid-execution is detected at the next start instead of being re-run.
+        cr.state = 'executing';
+        await save(all);
         await execute(cr, actor.sub);
       } else {
         cr.rule = `R6: ${approvers.size} of ${cr.required_approvals} required approvals; waiting for a different approver`;

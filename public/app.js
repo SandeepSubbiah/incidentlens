@@ -484,8 +484,8 @@ async function openSource(ev, check) {
 }
 
 /* Governance: Go / No-Go */
-const STATE_LABEL = { awaiting_approval: 'awaiting approval', completed: 'executed', failed: 'execution failed', denied: 'denied', vetoed: 'vetoed', expired: 'expired' };
-const STATE_CLASS = { awaiting_approval: 'queued', completed: 'done', failed: 'failed', denied: 'refuted', vetoed: 'refuted', expired: 'cancelled' };
+const STATE_LABEL = { awaiting_approval: 'awaiting approval', executing: 'executing', completed: 'executed', failed: 'execution failed, nothing changed', rolled_back: 'failed and rolled back', recovery_incomplete: 'recovery incomplete: needs a human', denied: 'denied', vetoed: 'vetoed', expired: 'expired' };
+const STATE_CLASS = { awaiting_approval: 'queued', executing: 'running', completed: 'done', failed: 'failed', rolled_back: 'parked', recovery_incomplete: 'failed', denied: 'refuted', vetoed: 'refuted', expired: 'cancelled' };
 const KIND_LABEL = { remediation: 'production code change', 'skill-change': 'self-repair skill change', 'skill-rollback': 'skill rollback' };
 
 function changeCard(c, compact = false) {

@@ -76,7 +76,12 @@ test('expiry fails closed, A4 is prohibited, the kill switch blocks approvals bu
   assert.equal(rb.state, 'completed', 'restoring a validated version stays possible during a freeze');
   await assert.rejects(setKillSwitch(false, judge, 'not allowed'), /R-ROLE/);
   await setKillSwitch(false, admin('sandeep'), 'drill over');
-  assert.equal((await decide(pending.id, admin('alex'), 'approve', 'after freeze', pending.hash)).state, 'completed');
+  // The rollback changed the live version, so the pending change is stale and must not undo it.
+  const outdated = await decide(pending.id, admin('alex'), 'approve', 'after freeze', pending.hash);
+  assert.equal(outdated.state, 'denied');
+  assert.match(outdated.rule!, /^R7/);
+  const fresh = await skillChange();
+  assert.equal((await decide(fresh.id, admin('alex'), 'approve', 'against the live version', fresh.hash)).state, 'completed');
 
   const chain = await auditLogAt(path.join(process.env.INCIDENTLENS_DATA_DIR!, 'audit.jsonl')).verify();
   assert.equal(chain.ok, true);
