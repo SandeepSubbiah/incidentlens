@@ -1,15 +1,39 @@
 # Three-minute demo script
 
-Two ways to record. Use **Plan A** only if the top bar shows `muse-wonder-1.0` / `muse-spark-1.3`
-and a live run has completed. Otherwise use **Plan B** and say on camera that the model is
-scripted. Never describe Plan B output as Muse output.
+Two ways to record. **Plan A (live Muse)** is the default: live calls were verified on
+2026-11-04 from 10:13 ET. Use it when the top bar shows `muse-wonder-1.0` / `muse-spark-1.3`
+and your rehearsal run below completed. Use **Plan B** only if live calls fail on the day, and
+say on camera that the model is scripted. Never describe Plan B output as Muse output.
+
+Live runs vary. Narrate what your run shows, not what an earlier run showed. If a beat below does
+not appear in your run, skip it rather than describe it.
 
 ## Before recording
 
-- **Plan A:** set `MODEL_API_KEY` in a new terminal, then `npm start`. Do one rehearsal run first.
-- **Plan B:** delete `data-offline-demo/` and `runs-offline-demo/`, then `npm run demo:offline`.
-- Browser window about 1440×900 at 100–110% zoom, on `http://localhost:5173`.
-- Keep the "Checkout failing with 5xx" incident (inc-001) selected. Plan B only scripts inc-001.
+**Plan A:**
+1. Open a **new** PowerShell window, so it picks up `MODEL_API_KEY`, then run:
+   ```powershell
+   cd C:\Users\Dell\Documents\Source\Meta\hackathon\incidentlens
+   npm start
+   ```
+   The terminal must print `(deep muse-wonder-1.0, fast muse-spark-1.3, responses API, open access)`.
+   If it says `MODEL_API_KEY NOT SET`, the window is too old; open another.
+2. **Rehearsal run (required).** Open `http://localhost:5173`, select inc-001, choose
+   **War Room · 6 agents**, click **Investigate**. It takes about 3–4 minutes and costs about
+   $0.70–0.85. This run becomes the one **Replay recorded run** plays back, and its change request
+   is the one the Go / No-Go card shows. So:
+   - Do **not** click Approve or Veto during the rehearsal.
+   - Record within **2 hours** of it. A3 change requests expire after 120 minutes, and Approve
+     would then be refused with **R3: approval window expired**. If that happens, run another
+     rehearsal.
+3. While it runs, note what your trail shows, so you narrate only what happened:
+   - Is there a **Fact rejected** line? Note the reason it gives.
+   - Is there a **paused … for …** line after the live update?
+   - What is the Skeptic's verdict (**Review of H1: stands** or another)?
+4. Browser window about 1440×900 at 100–110% zoom. Keep inc-001 selected.
+
+**Plan B:** delete `data-offline-demo/` and `runs-offline-demo/`, then `npm run demo:offline`.
+Plan B only scripts inc-001.
 
 ## Shot list
 
@@ -20,21 +44,39 @@ scripted. Never describe Plan B output as Muse output.
 - **Plan B** does not mention Muse as running here; go straight to the disclaimer below.
 
 **Plan B only — say this here, and keep the top bar visible:**
-> "Our Meta API billing isn't active yet, so this recording uses a scripted stand-in model. It is
-> not Muse, and these are not Muse's answers. Everything around the model, the verification, the
-> War Room scheduler, governance and self-repair, is real code running live."
+> "Live Meta API calls aren't available for this recording, so it uses a scripted stand-in model.
+> It is not Muse, and these are not Muse's answers. Everything around the model, the
+> verification, the War Room scheduler, governance and self-repair, is real code running live."
 
-**0:15–1:00 — The War Room.** (Plan B: the lanes show `scripted-deep` / `scripted-fast`; do not call them Muse.) Select inc-001, choose **War Room · 6 agents**, click **Investigate**.
+**0:15–1:00 — The War Room.** Select inc-001, choose **War Room · 6 agents**.
+- **Plan A:** click **Replay recorded run**. The banner reads "Replay of a recorded run
+  (muse-wonder-1.0) from …". Say:
+  > "This is a live Muse investigation we ran a few minutes ago, replayed at speed. The real run
+  > took about three and a half minutes and cost under a dollar."
+
+  Alternative: click **Investigate** and record the whole live run, then shorten the wait in
+  editing with an on-screen caption such as "live run, shortened".
+- **Plan B:** click **Investigate**. The lanes show `scripted-deep` / `scripted-fast`; do not call
+  them Muse.
 - Point at the lanes: Commander and Skeptic on the deep model, specialists on the fast model.
-- In the trail, find **"Fact rejected: quote not found"**:
+- **If** the trail has a **Fact rejected: quote not found** line, point at it and say what it
+  says. For example, in the 10:17 rehearsal the Code agent quoted the deploy diff without its
+  minus signs:
+  > "An agent quoted the diff, but not exactly. Close isn't good enough: the quote doesn't match
+  > the file, so it never reached the shared board."
+
+  In Plan B the scripted line is a log line that doesn't exist:
   > "An agent tried to post a log line that doesn't exist. It never reached the shared board."
-- When the red **Live update from Support** appears, point at **"Signals paused T2 (P1) for T5 (P0)"**:
+- When the red **Live update from Support** appears (part of the synthetic incident's timeline),
+  point at the **paused … for … (P0)** line:
   > "Customer impact is spreading, so the team stops the bleeding first, then resumes the root
   > cause with what it missed."
 
 **1:00–1:30 — The skeptic and the evidence.**
-- Point at **"Conclusion blocked: skeptic review required"**, then the Skeptic's **stands**
-  verdict: GC pauses are 18 ms, a red herring.
+- Point at the Skeptic's verdict, **Review of H1: stands**. Live runs usually show the Skeptic
+  searching for counter-evidence first. **Conclusion blocked: skeptic review required** appears
+  only if the Commander tried to conclude early. In Plan B it does, and the Skeptic's verdict is
+  that GC pauses are 18 ms, a red herring.
 - In the report, click a verified fact. The source panel highlights the exact line.
   > "Every citation is checked against the file. That proves the quote is real, not that the
   > conclusion is right: the Skeptic challenges the reasoning, and a human approves the fix."
@@ -53,18 +95,33 @@ scripted. Never describe Plan B output as Muse output.
 **2:00–2:45 — It repairs itself, within limits.** Open **Health and self-repair**.
 - Click **Seed a regression (synthetic runs)**. Say that the run records are synthetic, and point
   at the "5 synthetic (seeded)" label. The indicators turn **breached**.
-- Click **Run self-repair**. The trail shows the breach, the self-case, the rollback through a
-  pre-authorized change request, and "live on the next run, no restart".
+- Click **Run self-repair**.
+  - **Plan A:** the Doctor is Muse Wonder. In the rehearsal it took 18 seconds. The trail shows
+    the breach, the self-case, its **Diagnosis: …** line (it found the bad skill edit) and the
+    rollback through a pre-authorized change request.
+    > "The Doctor is Muse investigating IncidentLens itself, with the same evidence rules."
+  - **Plan B:** the deterministic rollback rule acts, because there is no model.
 - Point at the skills table (`solo` is back to v1) and **Audit log: chain intact**.
-  > "It investigates itself with the same evidence rules. It can change only its skills, never
-  > its constitution or its grader, and every change is audited."
+  > "It can change only its skills, never its constitution or its grader, and every change is
+  > audited."
 
 **2:45–3:00 — Close.**
-- **Plan A:** "Open source, 53 automated tests, Muse Wonder for deep reasoning, Muse Spark for
-  fast work. Evidence first, humans in charge."
+- **Plan A:** "Open source, 53 automated tests. On live Muse, it diagnosed all five of our test
+  incidents correctly in solo mode, with every cited quote verified. Evidence first, humans in
+  charge." Only say this if the numbers in `docs/EVALUATION_PROTOCOL.md` still say so.
 - **Plan B:** "Open source, 53 automated tests. It is built for Muse Wonder and Muse Spark; this
-  recording used a scripted model, and live Muse results are pending on billing. Evidence first,
-  humans in charge."
+  recording used a scripted model. Evidence first, humans in charge."
+
+## After recording (Plan A)
+
+Seeding a regression in live mode writes five synthetic run records into `runs/` and a bad
+`solo` skill version into `data/`. The Doctor rolls the skill back during the demo. Then:
+
+1. On the Health page, confirm `solo` is back to v1.
+2. Delete the synthetic run records so they stop counting in the health indicators:
+   ```powershell
+   Remove-Item runs\*\*-synthetic.json
+   ```
 
 ## If something goes wrong on camera
 

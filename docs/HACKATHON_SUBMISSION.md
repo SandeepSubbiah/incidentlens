@@ -56,8 +56,17 @@ explicit (approvals bound to the exact change, veto, expiry, kill switch).
 ## What is real and what is simulated
 - Implemented and covered by 53 automated tests in CI: verification, the War Room scheduler,
   governance, self-repair, retrieval, access control and the guards.
-- **Live Muse runs: not yet recorded.** The Meta Model API returns `402 billing_not_configured`
-  for this account. _Update this line if billing is fixed and a live run is recorded._
+- **Live Muse results (2026-11-04, one run per incident).**
+  - Solo (`muse-wonder-1.0`): 5 of 5 root causes correct, 5 of 5 fix targets, 51 of 51
+    citations verified, $0.81 for all five.
+  - War Room (Wonder plus Spark): 5 of 5 root causes, 4 of 5 fix targets, 58 of 58 citations
+    verified, $3.42.
+  - The verifier refused 5 of 160 facts the agents posted: three misquotes (two timestamps and a
+    diff line) and two quotes cut short with "…".
+
+  This is n = 1 on five incidents we wrote, not a benchmark, and on these the War Room was no
+  more accurate than solo mode. Details:
+  [docs/EVALUATION_PROTOCOL.md](EVALUATION_PROTOCOL.md#live-results-2026-11-04).
 - A verified citation proves the quoted text exists at the cited lines. It does not prove the conclusion drawn from it. Causal conclusions are
   judged by the Skeptic agent, by scoring against hidden answer keys in evaluation, and by the
   humans who approve the fix. Claim-level verification is planned (issue #6).

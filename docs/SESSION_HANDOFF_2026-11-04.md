@@ -1,6 +1,10 @@
 # Session handoff — 2026-11-04 ~00:50 ET
 
 For whoever continues: a person, or Claude Code after the usage reset at 2:10 AM ET.
+
+> **Update, 10:50 ET.** Meta billing works: HTTP 200 on both models from 10:13 ET. The first
+> live evaluation is recorded in `docs/EVALUATION_PROTOCOL.md` (Live results), and the demo
+> script now defaults to Plan A (live Muse). The 402 lines below are historical.
 **Deadline: Wednesday 2026-11-04, 9:00 PM ET.** Submission form:
 https://cerebralvalley.ai/e/meta-ai-developer-hackathon/hackathon/submit. Requirements per the
 organizer email: an open-source GitHub repo (mandatory) and a 3-minute demo video.

@@ -1,0 +1,474 @@
+{
+  "model": "muse-wonder-1.0",
+  "wire": "responses",
+  "events": [
+    {
+      "type": "start",
+      "mode": "solo",
+      "incident": {
+        "id": "inc-004-kafka-contract",
+        "title": "Inventory not reserved, items oversold since afternoon deploy",
+        "service": "inventory-service",
+        "severity": "SEV-2",
+        "started_at": "2026-11-01T15:32:00Z",
+        "alert": "Prometheus: kafka_consumergroup_lag{group=\"inventory-reservations\",topic=\"orders.placed.v1\"} > 5000 for 20m. Merchandising reports 140 orders accepted for out-of-stock SKUs. inventory-service pods healthy, CPU normal."
+      },
+      "model": "muse-wonder-1.0",
+      "wire": "responses",
+      "artifacts": 5,
+      "at": "2026-11-04T15:21:58.070Z",
+      "skills": {
+        "revision": 0,
+        "versions": {
+          "code": 1,
+          "commander": 1,
+          "doctor": 1,
+          "fixer": 1,
+          "platform": 1,
+          "signals": 1,
+          "skeptic": 1,
+          "solo": 1,
+          "change-correlation": 1,
+          "connection-pool-exhaustion": 1,
+          "database-locks-and-slow-queries": 1,
+          "dns-and-service-discovery": 1,
+          "gc-pauses-and-latency": 1,
+          "jvm-container-memory": 1,
+          "kafka-consumer-deserialization": 1,
+          "kubernetes-probes": 1,
+          "redis-cache-latency": 1,
+          "retries-timeouts-idempotency": 1,
+          "spring-transaction-boundaries": 1,
+          "thread-pool-starvation": 1
+        },
+        "candidate": []
+      }
+    },
+    {
+      "type": "thought",
+      "text": "Inventory oversold since the deploy — tracing the Kafka lag to its trigger.",
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "step",
+      "n": 1,
+      "tool": "list_artifacts",
+      "args": {},
+      "label": "Listed 5 artifacts",
+      "ms": 20,
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "step",
+      "n": 2,
+      "tool": "read_artifact",
+      "args": {
+        "path": "deploy/recent-changes.diff"
+      },
+      "label": "Read deploy/recent-changes.diff L1-26",
+      "ms": 9,
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "step",
+      "n": 3,
+      "tool": "read_artifact",
+      "args": {
+        "path": "inventory-service/src/main/java/com/acme/inventory/events/OrderPlacedEvent.java"
+      },
+      "label": "Read inventory-service/src/main/java/com/acme/inventory/events/OrderPlacedEvent.java L1-14",
+      "ms": 7,
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "step",
+      "n": 4,
+      "tool": "read_artifact",
+      "args": {
+        "path": "inventory-service/src/main/java/com/acme/inventory/OrderEventListener.java"
+      },
+      "label": "Read inventory-service/src/main/java/com/acme/inventory/OrderEventListener.java L1-35",
+      "ms": 9,
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "step",
+      "n": 5,
+      "tool": "read_artifact",
+      "args": {
+        "path": "k8s/kafka-consumer-groups.txt"
+      },
+      "label": "Read k8s/kafka-consumer-groups.txt L1-13",
+      "ms": 5,
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "step",
+      "n": 6,
+      "tool": "read_artifact",
+      "args": {
+        "path": "logs/inventory-service.log"
+      },
+      "label": "Read logs/inventory-service.log L1-15",
+      "ms": 5,
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "step",
+      "n": 7,
+      "tool": "search_runbooks",
+      "args": {
+        "query": "Jackson UnrecognizedPropertyException unknown field Kafka consumer FAIL_ON_UNKNOWN_PROPERTIES"
+      },
+      "label": "Searched runbooks \"Jackson UnrecognizedPropertyException un\" → kafka-consumer-deserialization",
+      "ms": 1,
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "step",
+      "n": 8,
+      "tool": "search_runbooks",
+      "args": {
+        "query": "Kafka consumer lag poison pill dead letter topic DLT partition blocked"
+      },
+      "label": "Searched runbooks \"Kafka consumer lag poison pill dead lett\" → kafka-consumer-deserialization",
+      "ms": 1,
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "step",
+      "n": 9,
+      "tool": "search_artifacts",
+      "args": {
+        "pattern": "ObjectMapper|FAIL_ON_UNKNOWN|loyaltyTier|Deserialization"
+      },
+      "label": "Searched /ObjectMapper|FAIL_ON_UNKNOWN|loyaltyTier|Deserialization/ — 7 hits",
+      "ms": 66,
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "verification",
+      "round": 1,
+      "checks": [
+        {
+          "status": "verified",
+          "found_line": 1
+        },
+        {
+          "status": "verified",
+          "found_line": 17
+        },
+        {
+          "status": "verified",
+          "found_line": 11
+        },
+        {
+          "status": "verified",
+          "found_line": 15
+        },
+        {
+          "status": "verified",
+          "found_line": 31
+        },
+        {
+          "status": "verified",
+          "found_line": 6
+        },
+        {
+          "status": "verified",
+          "found_line": 2
+        },
+        {
+          "status": "verified",
+          "found_line": 4
+        },
+        {
+          "status": "verified",
+          "found_line": 10
+        },
+        {
+          "status": "verified",
+          "found_line": 13
+        },
+        {
+          "status": "verified",
+          "found_line": 7
+        }
+      ],
+      "patch": {
+        "status": "applies",
+        "checked": 8,
+        "missing": []
+      },
+      "accepted": true
+    },
+    {
+      "type": "report",
+      "report": {
+        "category": "data-contract",
+        "confidence": 0.95,
+        "evidence": [
+          {
+            "artifact": "deploy/recent-changes.diff",
+            "end_line": 1,
+            "quote": "### order-service (producer) — deployed 2026-11-01T15:30:12Z as v5.3.0",
+            "start_line": 1,
+            "supports": "Producer deploy timing, immediately before the 15:32Z failures"
+          },
+          {
+            "artifact": "deploy/recent-changes.diff",
+            "end_line": 17,
+            "quote": "+        String loyaltyTier) {",
+            "start_line": 17,
+            "supports": "Producer added the new loyaltyTier field to OrderPlacedEvent"
+          },
+          {
+            "artifact": "inventory-service/src/main/java/com/acme/inventory/events/OrderPlacedEvent.java",
+            "end_line": 11,
+            "quote": "        String channel) {",
+            "start_line": 11,
+            "supports": "Consumer's event record still ends at channel and has no loyaltyTier property"
+          },
+          {
+            "artifact": "inventory-service/src/main/java/com/acme/inventory/OrderEventListener.java",
+            "end_line": 15,
+            "quote": "    private final ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();",
+            "start_line": 15,
+            "supports": "Consumer uses a hand-built ObjectMapper, whose default fails on unknown properties, rather than a tolerant/Spring-configured mapper"
+          },
+          {
+            "artifact": "inventory-service/src/main/java/com/acme/inventory/OrderEventListener.java",
+            "end_line": 32,
+            "quote": "        OrderPlacedEvent event = mapper.readValue(payload, OrderPlacedEvent.class);",
+            "start_line": 31,
+            "supports": "Deserialization at line 31 precedes the reservation call, so a parse failure prevents reservation"
+          },
+          {
+            "artifact": "logs/inventory-service.log",
+            "end_line": 6,
+            "quote": "Caused by: com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException: Unrecognized field \"loyaltyTier\" (class com.acme.inventory.events.OrderPlacedEvent), not marked as ignorable (5 known properties: \"orderId\", \"customerId\", \"lines\", \"placedAt\", \"channel\"])",
+            "start_line": 6,
+            "supports": "Direct error proving the new producer field broke consumer deserialization"
+          },
+          {
+            "artifact": "logs/inventory-service.log",
+            "end_line": 2,
+            "quote": "2026-11-01T15:26:44.109Z  INFO 1 --- [ntainer#0-0-C-1] c.a.inventory.OrderEventListener : reserved orderId=ord_99188 skus=1 offset=1882377",
+            "start_line": 2,
+            "supports": "Reservations succeeded minutes before the producer deploy"
+          },
+          {
+            "artifact": "logs/inventory-service.log",
+            "end_line": 4,
+            "quote": "2026-11-01T15:32:18.774Z ERROR 1 --- [ntainer#0-0-C-1] o.s.k.l.DefaultErrorHandler : Backoff FixedBackOff{interval=1000, currentAttempts=10, maxAttempts=9} exhausted for orders.placed.v1-3@1882390",
+            "start_line": 4,
+            "supports": "First shown failure after deploy exhausted retries on partition 3"
+          },
+          {
+            "artifact": "logs/inventory-service.log",
+            "end_line": 10,
+            "quote": "2026-11-01T15:32:18.790Z  INFO 1 --- [ntainer#0-0-C-1] o.s.k.l.DeadLetterPublishingRecoverer : Publishing record orders.placed.v1-3@1882390 to orders.placed.v1.DLT",
+            "start_line": 10,
+            "supports": "Failed records were diverted to the dead-letter topic instead of being reserved"
+          },
+          {
+            "artifact": "k8s/kafka-consumer-groups.txt",
+            "end_line": 13,
+            "quote": "orders.placed.v1.DLT:3:43",
+            "start_line": 13,
+            "supports": "At snapshot time 43 records had already been dead-lettered on partition 3"
+          },
+          {
+            "artifact": "k8s/kafka-consumer-groups.txt",
+            "end_line": 7,
+            "quote": "inventory-reservations  orders.placed.v1  3          1882434         1882510         76     consumer-2-91ac",
+            "start_line": 7,
+            "supports": "Consumer group lag/backlog state for the failing partition; total lag across lines 4-7 exceeds the 5000 alert threshold"
+          }
+        ],
+        "fix": {
+          "artifact": "inventory-service/src/main/java/com/acme/inventory/OrderEventListener.java",
+          "explanation": "Make the consumer a tolerant reader: keep its isolated ObjectMapper but disable FAIL_ON_UNKNOWN_PROPERTIES so additive producer fields (loyaltyTier and future fields) are ignored instead of poison-pilling reservations. This is smaller and safer than requiring a synchronized producer/consumer field addition. After human approval and deployment, replay orders.placed.v1.DLT idempotently.",
+          "patch": "--- a/inventory-service/src/main/java/com/acme/inventory/OrderEventListener.java\n+++ b/inventory-service/src/main/java/com/acme/inventory/OrderEventListener.java\n@@ -1,6 +1,7 @@\n package com.acme.inventory;\n \n import com.acme.inventory.events.OrderPlacedEvent;\n+import com.fasterxml.jackson.databind.DeserializationFeature;\n import com.fasterxml.jackson.databind.ObjectMapper;\n import org.slf4j.Logger;\n import org.slf4j.LoggerFactory;\n@@ -12,7 +13,8 @@ public class OrderEventListener {\n \n     private static final Logger log = LoggerFactory.getLogger(OrderEventListener.class);\n \n-    private final ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();\n+    private final ObjectMapper mapper = new ObjectMapper().findAndRegisterModules()\n+            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);\n     private final ReservationService reservations;\n "
+        },
+        "next_steps": [
+          "Human-approve and deploy the tolerant-deserialization fix to inventory-service; monitor UnrecognizedPropertyException, DLT publish rate, and inventory-reservations lag until lag returns to normal.",
+          "After the fix is live, replay orders.placed.v1.DLT (43 records already on partition 3 at snapshot, re-count all partitions first) through the fixed consumer, ensuring reservation replay is idempotent by orderId so no stock is double-reserved.",
+          "Reconcile the ~140 oversold orders reported by Merchandising against replay results: reserve where stock exists, otherwise backorder/cancel and notify affected customers.",
+          "Add a producer-consumer contract/compatibility check in CI (shared event schema or producer sample-payload test) so additive fields are verified against consumers before deploy, and alert on any DLT record / deserialization error rather than only lag."
+        ],
+        "regression_test": {
+          "code": "package com.acme.inventory;\n\nimport org.junit.jupiter.api.Test;\n\nimport static org.mockito.ArgumentMatchers.anyList;\nimport static org.mockito.ArgumentMatchers.eq;\nimport static org.mockito.Mockito.mock;\nimport static org.mockito.Mockito.verify;\n\nclass OrderEventListenerContractTest {\n\n    @Test\n    void toleratesProducerAddedLoyaltyTierField() throws Exception {\n        ReservationService reservations = mock(ReservationService.class);\n        OrderEventListener listener = new OrderEventListener(reservations);\n        String payload = \"{\\\"orderId\\\":\\\"ord_99200\\\",\\\"customerId\\\":\\\"cust_7\\\",\"\n                + \"\\\"lines\\\":[{\\\"sku\\\":\\\"SKU-1\\\",\\\"quantity\\\":1}],\"\n                + \"\\\"placedAt\\\":\\\"2026-11-01T15:32:00Z\\\",\\\"channel\\\":\\\"WEB\\\",\"\n                + \"\\\"loyaltyTier\\\":\\\"GOLD\\\"}\";\n\n        listener.onOrderPlaced(payload);\n\n        verify(reservations).reserve(eq(\"ord_99200\"), anyList());\n    }\n}\n",
+          "language": "java",
+          "name": "toleratesProducerAddedLoyaltyTierField"
+        },
+        "root_cause": "Trigger: order-service v5.3.0 deployed 2026-11-01T15:30:12Z added loyaltyTier to OrderPlacedEvent. Mechanism: inventory-service had not been redeployed, its copy of the record has only 5 fields, and OrderEventListener parses with `new ObjectMapper()` (FAIL_ON_UNKNOWN_PROPERTIES defaults to true), so mapper.readValue at line 31 throws UnrecognizedPropertyException for loyaltyTier before reservations.reserve() at line 32 can run. The DefaultErrorHandler retries (FixedBackOff 1000ms, attempts exhausted) and the DeadLetterPublishingRecoverer diverts records to orders.placed.v1.DLT (43 already on partition 3), while retries/backlog drive consumer-group lag past 5000. Impact: orders are accepted upstream but inventory is never reserved, so stock is not held/decremented and out-of-stock SKUs are oversold (~140 orders).",
+        "ruled_out": [
+          {
+            "hypothesis": "ERP stock sync slowness caused the reservation failures",
+            "reason": "ERP warnings (41s/39s) are WARN scheduling messages before/after the failure and reservations succeeded at 15:26; the actual consumer error is Jackson UnrecognizedPropertyException on loyaltyTier, not an ERP timeout."
+          },
+          {
+            "hypothesis": "Kafka retention increase (3d to 7d) broke consumption",
+            "reason": "That infra change was at 09:00, hours before failures began at 15:32, and retention does not cause UnrecognizedPropertyException or DLT diversion correlated with the 15:30 producer deploy."
+          },
+          {
+            "hypothesis": "Pods unhealthy / capacity / OOM",
+            "reason": "Incident states pods healthy and CPU normal; logs show the consumer process alive, retrying and publishing to the DLT, with lag growth explained by deserialization failures rather than crashes."
+          },
+          {
+            "hypothesis": "Empty/blank payloads were being skipped",
+            "reason": "The listener's blank-payload branch only logs a warning and returns; no such warnings explain the errors, which explicitly cite the loyaltyTier field at readValue."
+          }
+        ],
+        "summary": "Producer v5.3.0 added loyaltyTier to OrderPlaced; inventory-service's strict hand-built Jackson mapper rejects the unknown field, so events retry and dead-letter instead of reserving stock — make the consumer ignore unknown properties, then replay the DLT and reconcile oversold orders.",
+        "timeline": [
+          {
+            "event": "Reservations succeeding normally before deploy (e.g. ord_99188 reserved)",
+            "time": "2026-11-01T15:26:44Z"
+          },
+          {
+            "event": "ERP stock sync slow warning (41s) — coincidental noise, reservations already succeeded",
+            "time": "2026-11-01T15:29:10Z"
+          },
+          {
+            "event": "order-service v5.3.0 deployed adding loyaltyTier to OrderPlacedEvent",
+            "time": "2026-11-01T15:30:12Z"
+          },
+          {
+            "event": "First shown deserialization failure: retries exhausted for orders.placed.v1-3@1882390, record published to orders.placed.v1.DLT; incident/alert start",
+            "time": "2026-11-01T15:32:18Z"
+          },
+          {
+            "event": "Further failures/DLT publishes continue (offset 1882433 on partition 3); consumer lag exceeds 5000 and inventory remains unreserved, leading to oversell reports",
+            "time": "2026-11-01T15:41:02Z"
+          }
+        ]
+      },
+      "checks": [
+        {
+          "status": "verified",
+          "found_line": 1
+        },
+        {
+          "status": "verified",
+          "found_line": 17
+        },
+        {
+          "status": "verified",
+          "found_line": 11
+        },
+        {
+          "status": "verified",
+          "found_line": 15
+        },
+        {
+          "status": "verified",
+          "found_line": 31
+        },
+        {
+          "status": "verified",
+          "found_line": 6
+        },
+        {
+          "status": "verified",
+          "found_line": 2
+        },
+        {
+          "status": "verified",
+          "found_line": 4
+        },
+        {
+          "status": "verified",
+          "found_line": 10
+        },
+        {
+          "status": "verified",
+          "found_line": 13
+        },
+        {
+          "status": "verified",
+          "found_line": 7
+        }
+      ],
+      "patch": {
+        "status": "applies",
+        "checked": 8,
+        "missing": []
+      },
+      "score": {
+        "correct": true,
+        "groups": [
+          {
+            "any": [
+              "loyaltytier",
+              "unknown propert",
+              "unrecognized",
+              "new field"
+            ],
+            "hit": "loyaltytier"
+          },
+          {
+            "any": [
+              "objectmapper",
+              "deserializ",
+              "jackson"
+            ],
+            "hit": "objectmapper"
+          }
+        ],
+        "fix_target_correct": true
+      },
+      "stats": {
+        "steps": 9,
+        "seconds": 65.9,
+        "input_tokens": 15088,
+        "output_tokens": 6632,
+        "cost_usd": 0.1509,
+        "models": {
+          "muse-wonder-1.0": {
+            "input": 15088,
+            "cached": 11088,
+            "output": 6632,
+            "calls": 4
+          }
+        }
+      },
+      "revised": false,
+      "sandbox": {
+        "status": "applied",
+        "changed_lines": 4,
+        "diff": "+import com.fasterxml.jackson.databind.DeserializationFeature;\n+    private final ObjectMapper mapper = new ObjectMapper().findAndRegisterModules()\n+            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);\n-    private final ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();"
+      },
+      "change_request": {
+        "id": "CR-mw29nd6i-da40",
+        "kind": "remediation",
+        "title": "Apply fix to inventory-service/src/main/java/com/acme/inventory/OrderEventListener.java (inventory-service)",
+        "requester": "incidentlens:solo",
+        "risk": "A3",
+        "target": "inventory-service:inventory-service/src/main/java/com/acme/inventory/OrderEventListener.java",
+        "hash": "6cbb422b8efa6976a21579008a1e7392c8459084ccb1ac844e4d8af32b98c8cd",
+        "policy_version": "policy-2026-11-04.1",
+        "evidence": [
+          "deploy/recent-changes.diff:1",
+          "deploy/recent-changes.diff:17",
+          "inventory-service/src/main/java/com/acme/inventory/events/OrderPlacedEvent.java:11",
+          "inventory-service/src/main/java/com/acme/inventory/OrderEventListener.java:15",
+          "inventory-service/src/main/java/com/acme/inventory/OrderEventListener.java:31",
+          "logs/inventory-service.log:6",
+          "logs/inventory-service.log:2",
+          "logs/inventory-service.log:4",
+          "logs/inventory-service.log:10",
+          "k8s/kafka-consumer-groups.txt:13",
+          "k8s/kafka-consumer-groups.txt:7"
+        ],
+        "required_approvals": 2,
+        "execution": "simulated",
+        "conflicts": [],
+        "state": "awaiting_approval",
+        "created_at": "2026-11-04T15:23:03.930Z",
+        "expires_at": "2026-11-04T17:23:03.930Z"
+      }
+    }
+  ]
+}

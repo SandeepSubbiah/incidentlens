@@ -1,0 +1,499 @@
+{
+  "model": "muse-wonder-1.0",
+  "wire": "responses",
+  "events": [
+    {
+      "type": "start",
+      "mode": "solo",
+      "incident": {
+        "id": "inc-001-pool-exhaustion",
+        "title": "Checkout failing with 5xx, p99 latency above 30s",
+        "service": "payment-service",
+        "severity": "SEV-1",
+        "started_at": "2026-10-28T14:09:00Z",
+        "alert": "PagerDuty: checkout-api error rate 38% (threshold 2%) and p99 latency 31.4s (threshold 2s) for 6 minutes. Upstream: payment-service. Customer support reports card payments spinning then failing.",
+        "updates": [
+          {
+            "after_turns": 4,
+            "from": "Support",
+            "text": "Checkout failures are spreading to the mobile app; the support queue doubled in the last 5 minutes.",
+            "priority": 0
+          }
+        ]
+      },
+      "model": "muse-wonder-1.0",
+      "wire": "responses",
+      "artifacts": 6,
+      "at": "2026-11-04T15:18:48.855Z",
+      "skills": {
+        "revision": 0,
+        "versions": {
+          "code": 1,
+          "commander": 1,
+          "doctor": 1,
+          "fixer": 1,
+          "platform": 1,
+          "signals": 1,
+          "skeptic": 1,
+          "solo": 1,
+          "change-correlation": 1,
+          "connection-pool-exhaustion": 1,
+          "database-locks-and-slow-queries": 1,
+          "dns-and-service-discovery": 1,
+          "gc-pauses-and-latency": 1,
+          "jvm-container-memory": 1,
+          "kafka-consumer-deserialization": 1,
+          "kubernetes-probes": 1,
+          "redis-cache-latency": 1,
+          "retries-timeouts-idempotency": 1,
+          "spring-transaction-boundaries": 1,
+          "thread-pool-starvation": 1
+        },
+        "candidate": []
+      }
+    },
+    {
+      "type": "thought",
+      "text": "Investigating the checkout 5xx outage — tracing pool exhaustion from evidence to root cause.",
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "step",
+      "n": 1,
+      "tool": "list_artifacts",
+      "args": {},
+      "label": "Listed 6 artifacts",
+      "ms": 60,
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "step",
+      "n": 2,
+      "tool": "read_artifact",
+      "args": {
+        "path": "config/application.yml"
+      },
+      "label": "Read config/application.yml L1-35",
+      "ms": 88,
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "step",
+      "n": 3,
+      "tool": "read_artifact",
+      "args": {
+        "path": "deploy/recent-changes.diff"
+      },
+      "label": "Read deploy/recent-changes.diff L1-43",
+      "ms": 166,
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "step",
+      "n": 4,
+      "tool": "read_artifact",
+      "args": {
+        "path": "k8s/events.txt"
+      },
+      "label": "Read k8s/events.txt L1-11",
+      "ms": 134,
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "step",
+      "n": 5,
+      "tool": "read_artifact",
+      "args": {
+        "path": "logs/payment-service.log"
+      },
+      "label": "Read logs/payment-service.log L1-33",
+      "ms": 35,
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "step",
+      "n": 6,
+      "tool": "read_artifact",
+      "args": {
+        "path": "src/main/java/com/acme/payments/PaymentService.java"
+      },
+      "label": "Read src/main/java/com/acme/payments/PaymentService.java L1-48",
+      "ms": 209,
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "step",
+      "n": 7,
+      "tool": "read_artifact",
+      "args": {
+        "path": "traces/checkout-traces.json"
+      },
+      "label": "Read traces/checkout-traces.json L1-40",
+      "ms": 50,
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "thought",
+      "text": "The fraud call moved inside the transaction is holding all 10 DB connections during its 8s latency. I'll check runbook guidance before drafting the fix.",
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "step",
+      "n": 8,
+      "tool": "search_runbooks",
+      "args": {
+        "query": "Hikari pool exhaustion transaction holds connection during external HTTP call"
+      },
+      "label": "Searched runbooks \"Hikari pool exhaustion transaction holds\" → connection-pool-exhaustion",
+      "ms": 1,
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "step",
+      "n": 9,
+      "tool": "search_runbooks",
+      "args": {
+        "query": "increase Hikari maximumPoolSize vs fix connection held long transaction"
+      },
+      "label": "Searched runbooks \"increase Hikari maximumPoolSize vs fix c\" → connection-pool-exhaustion",
+      "ms": 1,
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "verification",
+      "round": 1,
+      "checks": [
+        {
+          "status": "verified",
+          "found_line": 5
+        },
+        {
+          "status": "verified",
+          "found_line": 31
+        },
+        {
+          "status": "verified",
+          "found_line": 25
+        },
+        {
+          "status": "verified",
+          "found_line": 11
+        },
+        {
+          "status": "verified",
+          "found_line": 14
+        },
+        {
+          "status": "verified",
+          "found_line": 22
+        },
+        {
+          "status": "verified",
+          "found_line": 14
+        },
+        {
+          "status": "verified",
+          "found_line": 22
+        },
+        {
+          "status": "verified",
+          "found_line": 37
+        },
+        {
+          "status": "verified",
+          "found_line": 11
+        }
+      ],
+      "patch": {
+        "status": "applies",
+        "checked": 13,
+        "missing": []
+      },
+      "accepted": true
+    },
+    {
+      "type": "report",
+      "report": {
+        "category": "code-change",
+        "confidence": 0.95,
+        "evidence": [
+          {
+            "artifact": "deploy/recent-changes.diff",
+            "start_line": 5,
+            "end_line": 8,
+            "quote": "    PR #482: Run fraud check before marking payment AUTHORIZED",
+            "supports": "Recent v2.14.0 change intentionally moved the fraud check into the authorization flow."
+          },
+          {
+            "artifact": "src/main/java/com/acme/payments/PaymentService.java",
+            "start_line": 31,
+            "end_line": 39,
+            "quote": "    @Transactional\n    public PaymentResult authorize(AuthorizeRequest req) {\n        Payment payment = paymentRepository.save(Payment.pending(req));\n        FraudVerdict verdict = fraudClient.score(payment);",
+            "supports": "authorize() opens a transaction and checks out a DB connection via save() before calling the remote fraud service, so the connection is held for the fraud call."
+          },
+          {
+            "artifact": "traces/checkout-traces.json",
+            "start_line": 25,
+            "end_line": 25,
+            "quote": "      { \"service\": \"fraud-service\", \"name\": \"POST /v1/score\", \"duration_ms\": 7962, \"status\": \"OK\", \"parent\": \"PaymentService.authorize\", \"note\": \"DB connection still checked out (connection held for span duration)\" },",
+            "supports": "During the incident a single fraud call took 7,962ms while its DB connection remained checked out."
+          },
+          {
+            "artifact": "traces/checkout-traces.json",
+            "start_line": 11,
+            "end_line": 11,
+            "quote": "      { \"service\": \"fraud-service\", \"name\": \"POST /v1/score\", \"duration_ms\": 188, \"status\": \"OK\", \"parent\": \"PaymentService.authorize\" },",
+            "supports": "Baseline before degradation: the same fraud span took only 188ms, so hold time grew ~40x."
+          },
+          {
+            "artifact": "config/application.yml",
+            "start_line": 14,
+            "end_line": 16,
+            "quote": "      maximum-pool-size: 10\n      minimum-idle: 5\n      connection-timeout: 30000",
+            "supports": "Only 10 connections per pod and a 30s wait limit: at ~8s hold time the pool can serve roughly 1.25 authorizations/sec/pod."
+          },
+          {
+            "artifact": "config/application.yml",
+            "start_line": 22,
+            "end_line": 26,
+            "quote": "clients:\n  fraud:\n    base-url: http://fraud-service.risk.svc.cluster.local\n    connect-timeout: 1s\n    read-timeout: 10s",
+            "supports": "The fraud client can block up to 10s on a read, i.e. a single checkout can pin a pooled connection for up to 10s."
+          },
+          {
+            "artifact": "logs/payment-service.log",
+            "start_line": 14,
+            "end_line": 15,
+            "quote": "2026-10-28T14:09:12.010Z DEBUG 1 --- [l-1 housekeeper] com.zaxxer.hikari.pool.HikariPool : HikariPool-1 - Pool stats (total=10, active=10, idle=0, waiting=14)",
+            "supports": "Pool fully saturated (10/10 active, 0 idle) with 14 threads already queued at 14:09:12."
+          },
+          {
+            "artifact": "logs/payment-service.log",
+            "start_line": 22,
+            "end_line": 22,
+            "quote": "Caused by: java.sql.SQLTransientConnectionException: HikariPool-1 - Connection is not available, request timed out after 30000ms (total=10, active=10, idle=0, waiting=37)",
+            "supports": "New transactions failed after waiting the full 30s pool timeout, producing the checkout 5xx."
+          },
+          {
+            "artifact": "traces/checkout-traces.json",
+            "start_line": 37,
+            "end_line": 37,
+            "quote": "      { \"service\": \"payment-service\", \"name\": \"HikariPool.getConnection\", \"duration_ms\": 30000, \"status\": \"ERROR\", \"parent\": \"PaymentService.authorize\", \"error\": \"SQLTransientConnectionException: Connection is not available, request timed out after 30000ms\" }",
+            "supports": "Failing checkouts spent the entire 30s waiting for a connection before any DB work, confirming queueing on the pool rather than slow SQL."
+          },
+          {
+            "artifact": "k8s/events.txt",
+            "start_line": 11,
+            "end_line": 11,
+            "quote": "9m          Warning   NodeNotReady        node/gke-risk-pool-3a1f                  Node is not ready; fraud-service-7b6c pods rescheduled, 2/4 replicas serving",
+            "supports": "Trigger: fraud-service lost capacity (2/4 replicas) on a NotReady node, explaining its latency rising from ~188ms to ~8s."
+          }
+        ],
+        "fix": {
+          "artifact": "src/main/java/com/acme/payments/PaymentService.java",
+          "explanation": "Remove the method-level @Transactional from authorize() so no Hikari connection is held across the remote fraud and gateway calls. Each paymentRepository.save() then runs in its own short repository transaction and releases the connection immediately; the fraud verdict and final status are still persisted together in the explicit final save(), preserving PR #482's atomic-persistence intent for the verdict+status write. Do not merely raise maximum-pool-size: with ~8s hold time that only delays saturation and multiplies DB connections per pod.",
+          "patch": "--- a/src/main/java/com/acme/payments/PaymentService.java\n+++ b/src/main/java/com/acme/payments/PaymentService.java\n@@ -30,16 +30,21 @@ public class PaymentService {\n \n     // Authorizes a card payment. Called by PaymentController for every checkout.\n-    @Transactional\n+    // No method-level @Transactional: remote calls must never run while a\n+    // pooled DB connection is checked out. Each repository save below runs\n+    // in its own short transaction and releases the connection at once.\n     public PaymentResult authorize(AuthorizeRequest req) {\n         Payment payment = paymentRepository.save(Payment.pending(req));\n         FraudVerdict verdict = fraudClient.score(payment);\n         if (verdict.rejected()) {\n             payment.markRejected(verdict.reason());\n+            paymentRepository.save(payment);\n             return PaymentResult.rejected(verdict.reason());\n         }\n         PaymentResult result = gateway.authorize(payment);\n         payment.markAuthorized(result.reference(), verdict.score());\n+        paymentRepository.save(payment);\n         return result;\n     }\n"
+        },
+        "next_steps": [
+          "Human-approved immediate mitigation: roll back payment-service to the pre-v2.14.0 release (or deploy the proposed fix) to restore checkout; this takes precedence over further root-cause work while impact is ongoing.",
+          "Restore fraud-service capacity in the risk namespace (replace/repair node gke-risk-pool-3a1f, back to 4/4 replicas) to remove the latency trigger.",
+          "Deploy the fix, then verify Hikari active/idle/waiting and authorize p99 return to baseline (~200ms) before scaling pods back down.",
+          "Add alerting on Hikari waiting threads / connection acquisition time and on transaction hold time, not just pool saturation.",
+          "Consider a shorter fraud read-timeout and a circuit breaker for the fraud client so a degraded dependency fails fast instead of pinning request threads; evaluate pool sizing only after hold time is fixed."
+        ],
+        "regression_test": {
+          "code": "@SpringBootTest\nclass PaymentServicePoolRegressionTest {\n\n    @Autowired PaymentService paymentService;\n    @MockBean PaymentRepository paymentRepository;\n    @MockBean FraudClient fraudClient;\n    @MockBean PaymentGateway gateway;\n\n    @Test\n    void authorize_doesNotHoldDbTransactionDuringFraudCall() {\n        AtomicBoolean txActiveDuringFraud = new AtomicBoolean(true);\n        AtomicBoolean txActiveDuringGateway = new AtomicBoolean(true);\n        when(paymentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));\n        when(fraudClient.score(any())).thenAnswer(inv -> {\n            txActiveDuringFraud.set(\n                TransactionSynchronizationManager.isActualTransactionActive());\n            return new FraudVerdict(false, null, 10);\n        });\n        when(gateway.authorize(any())).thenAnswer(inv -> {\n            txActiveDuringGateway.set(\n                TransactionSynchronizationManager.isActualTransactionActive());\n            return new PaymentResult(\"ref-1\", PaymentStatus.APPROVED);\n        });\n\n        paymentService.authorize(new AuthorizeRequest(\"ord_test\", \"10.00\"));\n\n        // Before the fix this is true: the fraud/gateway calls run inside\n        // authorize()'s @Transactional boundary and pin a Hikari connection.\n        assertFalse(txActiveDuringFraud.get(),\n            \"fraud call must not run inside a DB transaction\");\n        assertFalse(txActiveDuringGateway.get(),\n            \"gateway call must not run inside a DB transaction\");\n    }\n}",
+          "language": "java",
+          "name": "authorize_doesNotHoldDbTransactionDuringFraudCall"
+        },
+        "root_cause": "Trigger: fraud-service lost capacity when node gke-risk-pool-3a1f went NotReady (2/4 replicas serving), so fraud scoring slowed from ~188ms to ~8s (up to the 10s read-timeout). Mechanism: PR #482 (v2.14.0) moved fraudClient.score() — and the gateway call was already there — inside PaymentService.authorize()'s @Transactional method, after paymentRepository.save() had checked out a Hikari connection. Each authorization therefore pinned one of only 10 pooled connections for the full ~8s fraud duration, capping throughput at ~1.25 req/s/pod while Tomcat can run 200 threads. The queue of waiting threads grew (14 -> 66), new transactions could not even begin (CannotCreateTransactionException at transaction creation) and failed after the 30s connection-timeout. Customer impact: checkout requests timed out after ~30s / returned 502 from payment-service, giving the 38% error rate and 31.4s p99. The design flaw (remote calls inside a DB transaction) is the root cause; the fraud-service node failure was the trigger that exposed it.",
+        "ruled_out": [
+          {
+            "hypothesis": "Pool simply too small / traffic surge — fix by raising maximum-pool-size or scaling pods",
+            "reason": "Hold time, not demand, changed: the same pool served ~200ms authorizations at 14:03. At ~8s hold, even a much larger pool only delays saturation, and HPA already scaled 3->6 replicas without relief; traces show time spent waiting for getConnection, not executing work."
+          },
+          {
+            "hypothesis": "Slow database / long-running queries or lock waits",
+            "reason": "In traces INSERT takes 4-5ms, UPDATE 3-4ms, COMMIT 2ms; failing requests spend 30,000ms in HikariPool.getConnection before any SQL runs. The 'payment_audit already exists' log line is a benign skip warning."
+          },
+          {
+            "hypothesis": "Connection leak (connections never returned)",
+            "reason": "Connections do return: e.g. ord_88250 completes APPROVED in 8,174ms after a 7,962ms fraud call. Active stays at exactly total=10 with a growing wait queue — classic hold-time exhaustion, not a leak."
+          },
+          {
+            "hypothesis": "JVM GC pauses causing the latency",
+            "reason": "GC pauses in the log are 18-31ms, three orders of magnitude below the 30s timeouts and 8s fraud spans."
+          },
+          {
+            "hypothesis": "Card gateway slowness",
+            "reason": "No slow gateway evidence; the slow span in traces and logs is fraud POST /v1/score (7,962ms) and total authorize time (8,174ms) tracks it almost exactly."
+          },
+          {
+            "hypothesis": "Spring Boot 3.3.4->3.3.5 bump (2026-10-27) caused it",
+            "reason": "A patch-level framework bump a day earlier with no datasource/pool changes; the incident correlates precisely with v2.14.0 (PR #482) plus fraud latency, and healthy traces exist after the bump."
+          },
+          {
+            "hypothesis": "Fraud-service outage alone is the root cause",
+            "reason": "It is the trigger, not the mechanism of checkout failure: a slow-but-answering fraud service (spans still OK at ~8s) should only slow individual authorizations. Checkout collapsed because that latency was multiplied across a 10-connection pool held inside transactions."
+          }
+        ],
+        "summary": "Checkout is failing because PR #482 moved the fraud check inside authorize()'s DB transaction: with fraud-service degraded to ~8s, each request pins one of only 10 Hikari connections, the pool saturates, and new checkouts die after the 30s pool timeout. Roll back v2.14.0 or move the remote calls outside the transaction.",
+        "timeline": [
+          {
+            "time": "2026-10-28T13:40:02Z",
+            "event": "PR #482 committed (tag v2.14.0): fraud check moved into the @Transactional authorize() method."
+          },
+          {
+            "time": "2026-10-28T14:02:41Z",
+            "event": "payment-service v2.14.0 starts; HikariPool-1 starts normally."
+          },
+          {
+            "time": "2026-10-28T14:03:10Z",
+            "event": "Healthy baseline: authorize completes in ~212ms with fraud span 188ms."
+          },
+          {
+            "time": "2026-10-28T14:08:58Z",
+            "event": "First slow fraud warnings (~4.1s, rising to ~7.9s) as fraud-service runs at 2/4 replicas after a NodeNotReady event in the risk pool."
+          },
+          {
+            "time": "2026-10-28T14:09:12Z",
+            "event": "Hikari pool saturated: total=10, active=10, idle=0, waiting=14."
+          },
+          {
+            "time": "2026-10-28T14:09:41Z",
+            "event": "First connection-acquisition timeouts after 30000ms (waiting=37); CannotCreateTransactionException surfaces as checkout 5xx/502."
+          },
+          {
+            "time": "2026-10-28T14:10:12Z",
+            "event": "Waiting threads grow to 52, then 58-66 by 14:11-14:13; HPA scales 3->6 replicas without relieving per-pod pool exhaustion."
+          }
+        ]
+      },
+      "checks": [
+        {
+          "status": "verified",
+          "found_line": 5
+        },
+        {
+          "status": "verified",
+          "found_line": 31
+        },
+        {
+          "status": "verified",
+          "found_line": 25
+        },
+        {
+          "status": "verified",
+          "found_line": 11
+        },
+        {
+          "status": "verified",
+          "found_line": 14
+        },
+        {
+          "status": "verified",
+          "found_line": 22
+        },
+        {
+          "status": "verified",
+          "found_line": 14
+        },
+        {
+          "status": "verified",
+          "found_line": 22
+        },
+        {
+          "status": "verified",
+          "found_line": 37
+        },
+        {
+          "status": "verified",
+          "found_line": 11
+        }
+      ],
+      "patch": {
+        "status": "applies",
+        "checked": 13,
+        "missing": []
+      },
+      "score": {
+        "correct": true,
+        "groups": [
+          {
+            "any": [
+              "hikari",
+              "connection pool",
+              "pool exhaust",
+              "connections"
+            ],
+            "hit": "hikari"
+          },
+          {
+            "any": [
+              "fraud"
+            ],
+            "hit": "fraud"
+          },
+          {
+            "any": [
+              "@transactional",
+              "transaction"
+            ],
+            "hit": "@transactional"
+          }
+        ],
+        "fix_target_correct": true
+      },
+      "stats": {
+        "steps": 9,
+        "seconds": 82.7,
+        "input_tokens": 19783,
+        "output_tokens": 8409,
+        "cost_usd": 0.2119,
+        "models": {
+          "muse-wonder-1.0": {
+            "input": 19783,
+            "cached": 9320,
+            "output": 8409,
+            "calls": 4
+          }
+        }
+      },
+      "revised": false,
+      "sandbox": {
+        "status": "applied",
+        "changed_lines": 6,
+        "diff": "+    // No method-level @Transactional: remote calls must never run while a\n+    // pooled DB connection is checked out. Each repository save below runs\n+    // in its own short transaction and releases the connection at once.\n-    @Transactional\n+            paymentRepository.save(payment);\n+        paymentRepository.save(payment);"
+      },
+      "change_request": {
+        "id": "CR-mw29jm6q-5ccd",
+        "kind": "remediation",
+        "title": "Apply fix to src/main/java/com/acme/payments/PaymentService.java (payment-service)",
+        "requester": "incidentlens:solo",
+        "risk": "A3",
+        "target": "payment-service:src/main/java/com/acme/payments/PaymentService.java",
+        "hash": "c89a25f5a01441f81ef24c0ffe36f7f58c23a890c7b3e6b94e8811954bfa5d8e",
+        "policy_version": "policy-2026-11-04.1",
+        "evidence": [
+          "deploy/recent-changes.diff:5",
+          "src/main/java/com/acme/payments/PaymentService.java:31",
+          "traces/checkout-traces.json:25",
+          "traces/checkout-traces.json:11",
+          "config/application.yml:14",
+          "config/application.yml:22",
+          "logs/payment-service.log:14",
+          "logs/payment-service.log:22",
+          "traces/checkout-traces.json:37",
+          "k8s/events.txt:11"
+        ],
+        "required_approvals": 2,
+        "execution": "simulated",
+        "conflicts": [
+          "CR-mw29g1dq-b307"
+        ],
+        "state": "awaiting_approval",
+        "created_at": "2026-11-04T15:20:08.978Z",
+        "expires_at": "2026-11-04T17:20:08.978Z"
+      }
+    }
+  ]
+}

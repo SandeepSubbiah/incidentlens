@@ -1,7 +1,7 @@
 # Spec compliance report
 
 Progress against three specifications, as of 2026-11-04 00:45 ET, HEAD `71c1941` plus the
-commit that adds this file:
+commit that adds this file. Updated at 10:50 ET with the first live Muse results.
 
 1. `INCIDENTLENS_CLAUDE_CODE_MASTER_PROMPT.md`, the original master prompt.
 2. `INCIDENTLENS_SENTINEL_CLAUDE_CODE_ADDENDUM.md`, the Sentinel addendum.
@@ -9,8 +9,8 @@ commit that adds this file:
    status is the union of both. It refers to itself at a `docs/` path, but it is not in this
    repository.
 
-**Bottom line:** none is fully complete. Spec 1's hackathon phase (H0) is complete except
-live Muse runs (blocked) and the video and submission (the owner's). Spec 2's own hackathon
+**Bottom line:** none is fully complete. Spec 1's hackathon phase (H0) is complete except the
+video and submission (the owner's). Live Muse runs were recorded on 2026-11-04. Spec 2's own hackathon
 slice is mostly not done. The Phase P work of both is tracked as GitHub issues #1–#16.
 
 ## Legend: real versus mocked
@@ -22,9 +22,12 @@ slice is mostly not done. The Phase P work of both is tracked as GitHub issues #
 | **Built** | In code, no automated test |
 | **Partial** | Some of it exists; the gap is stated |
 | **Missing** | Not built |
-| **Blocked** | Needs live Muse inference: `402 billing_not_configured` on both models, last checked 00:37 ET |
+| **Live** | Also exercised against the real Meta Model API on 2026-11-04 (n = 1 per incident and mode) |
 
-**No test in this repository has ever run against live Muse.** CI on `71c1941`: 53 of 53 pass.
+The automated tests use a scripted model or none; they never call live Muse. Live results are
+separate: [EVALUATION_PROTOCOL.md](EVALUATION_PROTOCOL.md#live-results-2026-11-04). Live calls
+returned `402 billing_not_configured` until the morning of 2026-11-04, and HTTP 200 on both
+models from 10:13 ET. CI on `71c1941`: 53 of 53 pass.
 The demo walkthrough in Chrome (offline mode, scripted model): 19 of 19 checks pass.
 
 ## Spec 1: original master prompt
@@ -34,9 +37,9 @@ The demo walkthrough in Chrome (offline mode, scripted model): 19 of 19 checks p
 | Requirement | Status |
 |---|---|
 | Audit, gap matrix, decision log | Done |
-| Confirm Muse access, document the blocker | Done; blocked and labelled everywhere |
-| One full investigation with visible evidence and citation checks | Done (mocked) |
-| Save a real Muse run | **Blocked** |
+| Confirm Muse access, document the blocker | Done: 402 until 2026-11-04, HTTP 200 from 10:13 ET |
+| One full investigation with visible evidence and citation checks | Done (mocked) and **Live** |
+| Save a real Muse run | **Done (Live):** 12 runs in `eval/live-2026-11-04/` |
 | A claim visibly rejected, then corrected | Done (mocked): made-up fact rejected, bad patch rejected |
 | Governance: deny, approval, veto, expiry | Done (no model) |
 | Self-repair detection and rollback, labelled | Done (no model): seeded synthetic runs, marked `synthetic: true` |
@@ -56,7 +59,7 @@ The demo walkthrough in Chrome (offline mode, scripted model): 19 of 19 checks p
 | §9 Engineering RAG | Partial | BM25 plus case memory with leakage controls; no vector search, code graph, versioning or contradiction search |
 | §10 AI coding lab | Missing | |
 | §11 Loops | Partial | Reflexes done (mocked); reflection done (mocked) without a skeptic for the Doctor; evolution missing |
-| §12 Evaluation | Partial | Harness built; live results blocked; no baselines, ablations or benchmarks |
+| §12 Evaluation | Partial | Harness built; first live results (n = 1): 5/5 root causes in both modes; no repetitions, baselines, ablations or benchmarks |
 | §13 Security | Partial | See THREAT_MODEL.md; no container sandbox, egress allowlist or revocation |
 | §14 Execution and recovery | Partial | Skill rollback and compensation done; remediation simulated |
 | §15 Dashboard (12 sections) | Partial | About 4 of 12 |
@@ -77,7 +80,7 @@ Corrupted memory is missing.
 
 | Item | Status |
 |---|---|
-| Re-verify Muse access | Done: still 402 |
+| Re-verify Muse access | Done: HTTP 200 on both models, 2026-11-04 10:13 ET |
 | Sentinel Assurance Panel (five categories) | **Missing** |
 | Deterministic pack: S01, S02, S06, S08, S14, S15, S20, S24 plus a negative control | **Partial.** S08 done; S01, S02, S06 and S20 partial; S14, S15 and S24 missing; no `npm run sentinel:test` |
 | Full assurance sequence | Partial (mocked); claim-level rejection missing |
@@ -126,7 +129,8 @@ Corrupted memory is missing.
 
 ## Largest gaps, in order
 
-1. No live Muse run (billing).
+1. Live evaluation is one run per incident on five self-written incidents, with no baseline or
+   ablation.
 2. Sentinel hackathon slice: the Assurance Panel and the test pack.
 3. Claim-level verification (S14, S15) and drift detection (S24).
 4. No compile or test of patches in a container.

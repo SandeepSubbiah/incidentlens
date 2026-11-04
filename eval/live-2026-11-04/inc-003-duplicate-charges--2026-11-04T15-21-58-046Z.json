@@ -1,0 +1,513 @@
+{
+  "model": "muse-wonder-1.0",
+  "wire": "responses",
+  "events": [
+    {
+      "type": "start",
+      "mode": "solo",
+      "incident": {
+        "id": "inc-003-duplicate-charges",
+        "title": "Customers charged twice for a single order",
+        "service": "billing-service",
+        "severity": "SEV-1",
+        "started_at": "2026-10-31T18:05:00Z",
+        "alert": "Support escalation: 23 tickets in 40 minutes reporting duplicate card charges for one order. Finance reconciliation job flagged 61 orders with more than one captured charge since 18:05 UTC. No error-rate alert fired.",
+        "updates": [
+          {
+            "after_turns": 6,
+            "from": "Finance",
+            "text": "Duplicate charges are still happening: 9 more orders were double-charged in the last 5 minutes. Stop the bleeding first, then finish the root cause.",
+            "priority": 0
+          }
+        ]
+      },
+      "model": "muse-wonder-1.0",
+      "wire": "responses",
+      "artifacts": 6,
+      "at": "2026-11-04T15:21:00.907Z",
+      "skills": {
+        "revision": 0,
+        "versions": {
+          "code": 1,
+          "commander": 1,
+          "doctor": 1,
+          "fixer": 1,
+          "platform": 1,
+          "signals": 1,
+          "skeptic": 1,
+          "solo": 1,
+          "change-correlation": 1,
+          "connection-pool-exhaustion": 1,
+          "database-locks-and-slow-queries": 1,
+          "dns-and-service-discovery": 1,
+          "gc-pauses-and-latency": 1,
+          "jvm-container-memory": 1,
+          "kafka-consumer-deserialization": 1,
+          "kubernetes-probes": 1,
+          "redis-cache-latency": 1,
+          "retries-timeouts-idempotency": 1,
+          "spring-transaction-boundaries": 1,
+          "thread-pool-starvation": 1
+        },
+        "candidate": []
+      }
+    },
+    {
+      "type": "thought",
+      "text": "Investigating duplicate charges (SEV-1) — tracing 61 double-captured orders to their trigger.",
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "step",
+      "n": 1,
+      "tool": "list_artifacts",
+      "args": {},
+      "label": "Listed 6 artifacts",
+      "ms": 19,
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "step",
+      "n": 2,
+      "tool": "read_artifact",
+      "args": {
+        "path": "config/application.yml"
+      },
+      "label": "Read config/application.yml L1-27",
+      "ms": 6,
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "step",
+      "n": 3,
+      "tool": "read_artifact",
+      "args": {
+        "path": "deploy/recent-changes.diff"
+      },
+      "label": "Read deploy/recent-changes.diff L1-20",
+      "ms": 5,
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "step",
+      "n": 4,
+      "tool": "read_artifact",
+      "args": {
+        "path": "docs/gateway-api-notes.md"
+      },
+      "label": "Read docs/gateway-api-notes.md L1-8",
+      "ms": 6,
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "step",
+      "n": 5,
+      "tool": "read_artifact",
+      "args": {
+        "path": "logs/billing-service.log"
+      },
+      "label": "Read logs/billing-service.log L1-12",
+      "ms": 6,
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "step",
+      "n": 6,
+      "tool": "read_artifact",
+      "args": {
+        "path": "logs/gateway-webhooks.log"
+      },
+      "label": "Read logs/gateway-webhooks.log L1-12",
+      "ms": 5,
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "step",
+      "n": 7,
+      "tool": "read_artifact",
+      "args": {
+        "path": "src/main/java/com/acme/billing/gateway/GatewayClient.java"
+      },
+      "label": "Read src/main/java/com/acme/billing/gateway/GatewayClient.java L1-36",
+      "ms": 9,
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "thought",
+      "text": "Evidence points to blind retries on a non-idempotent charge endpoint timing out at 2s. I'll check runbook guidance before submitting the fix.",
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "step",
+      "n": 8,
+      "tool": "search_runbooks",
+      "args": {
+        "query": "retry non-idempotent POST payment charge timeout idempotency key duplicate"
+      },
+      "label": "Searched runbooks \"retry non-idempotent POST payment charge\" → retries-timeouts-idempotency",
+      "ms": 2,
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "step",
+      "n": 9,
+      "tool": "search_artifacts",
+      "args": {
+        "pattern": "orderId|Idempotency|ChargeRequest"
+      },
+      "label": "Searched /orderId|Idempotency|ChargeRequest/ — 17 hits",
+      "ms": 188,
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "verification",
+      "round": 1,
+      "checks": [
+        {
+          "status": "verified",
+          "found_line": 5
+        },
+        {
+          "status": "verified",
+          "found_line": 18
+        },
+        {
+          "status": "verified",
+          "found_line": 8
+        },
+        {
+          "status": "verified",
+          "found_line": 14
+        },
+        {
+          "status": "verified",
+          "found_line": 3
+        },
+        {
+          "status": "verified",
+          "found_line": 6
+        },
+        {
+          "status": "verified",
+          "found_line": 12
+        },
+        {
+          "status": "verified",
+          "found_line": 3
+        },
+        {
+          "status": "verified",
+          "found_line": 2
+        },
+        {
+          "status": "verified",
+          "found_line": 4
+        },
+        {
+          "status": "verified",
+          "found_line": 6
+        }
+      ],
+      "patch": {
+        "status": "applies",
+        "checked": 4,
+        "missing": []
+      },
+      "accepted": true
+    },
+    {
+      "type": "report",
+      "report": {
+        "category": "code-change",
+        "confidence": 0.95,
+        "evidence": [
+          {
+            "artifact": "deploy/recent-changes.diff",
+            "start_line": 5,
+            "end_line": 10,
+            "quote": "    BILL-877: add resilience to gateway calls (retry + circuit breaker)",
+            "supports": "A recent change intentionally added retry resilience to gateway calls."
+          },
+          {
+            "artifact": "src/main/java/com/acme/billing/gateway/GatewayClient.java",
+            "start_line": 18,
+            "end_line": 26,
+            "quote": "    @Retry(name = \"paymentGateway\")",
+            "supports": "The non-idempotent createCharge POST is annotated for automatic retry; the following lines in this range show POST /v1/charges."
+          },
+          {
+            "artifact": "config/application.yml",
+            "start_line": 8,
+            "end_line": 18,
+            "quote": "  read-timeout: 2s",
+            "supports": "Client read timeout is only 2s, below the gateway's degraded p99 latency."
+          },
+          {
+            "artifact": "config/application.yml",
+            "start_line": 14,
+            "end_line": 18,
+            "quote": "        max-attempts: 3",
+            "supports": "Retry permits up to three attempts, matching the three charges seen for one order."
+          },
+          {
+            "artifact": "docs/gateway-api-notes.md",
+            "start_line": 3,
+            "end_line": 7,
+            "quote": "- `POST /v1/charges` creates and captures a charge. It is **not idempotent** by default.",
+            "supports": "Repeating the POST can create and capture another distinct charge unless an idempotency key is used."
+          },
+          {
+            "artifact": "docs/gateway-api-notes.md",
+            "start_line": 6,
+            "end_line": 7,
+            "quote": "- A client-side timeout does not mean the charge failed: the gateway may still complete it.",
+            "supports": "A read timeout is ambiguous: the first attempt can succeed server-side while the client retries."
+          },
+          {
+            "artifact": "logs/gateway-webhooks.log",
+            "start_line": 12,
+            "end_line": 12,
+            "quote": "18:04 UTC  Degraded performance - Charge API p99 latency elevated (2.5-3.2s). Requests are being processed.",
+            "supports": "Trigger: gateway latency rose above the 2s read timeout while requests were still being processed."
+          },
+          {
+            "artifact": "logs/billing-service.log",
+            "start_line": 3,
+            "end_line": 4,
+            "quote": "2026-10-31T18:05:41.112Z  WARN 1 --- [nio-8080-exec-7] i.g.r.retry.internal.RetryImpl : Retry 'paymentGateway', waiting PT0.5S until attempt '2'. Last attempt failed with exception 'java.net.SocketTimeoutException: Read timed out'.",
+            "supports": "Billing retried the charge after a read timeout at incident start."
+          },
+          {
+            "artifact": "logs/gateway-webhooks.log",
+            "start_line": 2,
+            "end_line": 3,
+            "quote": "2026-10-31T18:05:42.903Z charge.succeeded id=ch_3Pq9Wb amount=12999 currency=cad metadata.orderId=ord_90502 created=2026-10-31T18:05:40.981Z",
+            "supports": "First webhook shows a distinct successful charge for ord_90502; the next line in range shows a second distinct charge id for the same order and amount."
+          },
+          {
+            "artifact": "logs/gateway-webhooks.log",
+            "start_line": 4,
+            "end_line": 6,
+            "quote": "2026-10-31T18:06:11.420Z charge.succeeded id=ch_3PqA0z amount=1950 currency=cad metadata.orderId=ord_90517 created=2026-10-31T18:06:09.877Z",
+            "supports": "Ord_90517 received multiple distinct charge.succeeded charges (three lines in this range), matching up to three retry attempts."
+          },
+          {
+            "artifact": "logs/billing-service.log",
+            "start_line": 5,
+            "end_line": 7,
+            "quote": "2026-10-31T18:06:12.851Z  WARN 1 --- [nio-8080-exec-2] i.g.r.retry.internal.RetryImpl : Retry 'paymentGateway', waiting PT0.5S until attempt '3'. Last attempt failed with exception 'java.net.SocketTimeoutException: Read timed out'.",
+            "supports": "Ord_90517's call reached attempt 3 after repeated read timeouts before finally logging success."
+          }
+        ],
+        "fix": {
+          "artifact": "src/main/java/com/acme/billing/gateway/GatewayClient.java",
+          "explanation": "Remove automatic retry from the non-idempotent POST /v1/charges create operation. Keep the circuit breaker and keep @Retry on the safe GET. This is the smallest reversible change that stops a client read timeout from issuing a second/third charge creation. Do not re-enable create retries until a deterministic Idempotency-Key derived from the order id is sent on every attempt and/or the result is reconciled via GET by orderId before retrying; also review raising the 2s read timeout against gateway latency, but a timeout increase alone is not the fix.",
+          "patch": "--- a/src/main/java/com/acme/billing/gateway/GatewayClient.java\n+++ b/src/main/java/com/acme/billing/gateway/GatewayClient.java\n@@ -18,7 +18,6 @@ public class GatewayClient {\n \n-    @Retry(name = \"paymentGateway\")\n     @CircuitBreaker(name = \"paymentGateway\")\n     public ChargeResponse createCharge(ChargeRequest request) {\n         return restClient.post()"
+        },
+        "next_steps": [
+          "Human-approved emergency mitigation: deploy the patch or set paymentGateway retry max-attempts to 1 for createCharge, to stop further duplicate captures while gateway latency is elevated.",
+          "Identify and refund/void duplicate captured charges for the 61 flagged orders (and search since 18:05 UTC by metadata.orderId), verifying against gateway records before refunding customers.",
+          "Before re-enabling retries on createCharge, add a deterministic Idempotency-Key derived from orderId on every POST /v1/charges attempt, or reconcile with GET /v1/charges?metadata.orderId=... after an ambiguous timeout.",
+          "Add alerting on multiple charge.succeeded events for the same metadata.orderId and on retry-after-timeout for payment creation, since eventual retry success suppresses error-rate alerts.",
+          "Review read-timeout against gateway p99 latency budget after idempotency is in place."
+        ],
+        "regression_test": {
+          "code": "package com.acme.billing.gateway;\n\nimport io.github.resilience4j.retry.annotation.Retry;\nimport org.junit.jupiter.api.Test;\n\nimport static org.junit.jupiter.api.Assertions.assertFalse;\nimport static org.junit.jupiter.api.Assertions.assertTrue;\n\nclass GatewayClientRetryTest {\n\n    @Test\n    void createChargeMustNotBeAutomaticallyRetried() throws Exception {\n        // POST /v1/charges is not idempotent: a read timeout can mean the gateway\n        // already captured the charge, so blind retries create duplicate charges.\n        assertFalse(\n            GatewayClient.class\n                .getMethod(\"createCharge\", ChargeRequest.class)\n                .isAnnotationPresent(Retry.class),\n            \"createCharge must not carry @Retry unless it sends a deterministic Idempotency-Key\");\n    }\n\n    @Test\n    void getChargeRemainsRetryable() throws Exception {\n        assertTrue(\n            GatewayClient.class\n                .getMethod(\"getCharge\", String.class)\n                .isAnnotationPresent(Retry.class),\n            \"GET charges are safe to retry\");\n    }\n}",
+          "language": "java",
+          "name": "createChargeMustNotBeAutomaticallyRetried"
+        },
+        "root_cause": "Trigger -> mechanism -> impact: At 18:04 UTC the card gateway's Charge API p99 latency rose to 2.5-3.2s while requests were still being processed, exceeding billing-service's 2s read-timeout. BILL-877 had added Resilience4j @Retry to GatewayClient.createCharge, configured for max-attempts 3 on SocketTimeoutException/IOException. Each attempt issues POST /v1/charges, which is not idempotent by default, and GatewayClient sends no Idempotency-Key. So the first attempt could time out client-side after the gateway had already created/captured the charge; the automatic retry then created a second (and for ord_90517 a third) distinct charge. Retries eventually succeeded, so no error-rate alert fired, but customers were charged multiple times for one order. The ledger 409 for ord_90517 is a downstream consequence of the duplicates, not the cause.",
+        "ruled_out": [
+          {
+            "hypothesis": "Ledger sync batch-size change (200 -> 500 on 2026-10-31) caused duplicates",
+            "reason": "Gateway webhooks show distinct charge ids created by the gateway for the same orderId before ledger sync, and the ledger 409 'duplicate external reference ord_90517' follows those duplicate charges; ledger sync is a victim/consequence, not the charge creator."
+          },
+          {
+            "hypothesis": "Duplicate webhook deliveries from the gateway",
+            "reason": "Webhooks for the same order have different charge ids (e.g. ch_3Pq9Wb vs ch_3Pq9Xk for ord_90502) and different created timestamps/amounts matching separate captures, and finance flagged more than one captured charge."
+          },
+          {
+            "hypothesis": "Customers/users double-submitted orders",
+            "reason": "Billing logs show one capture log per affected order while retry logs and multiple gateway charges occur inside a single call chain/thread (e.g. nio-8080-exec-2 for ord_90517 reaching attempt 3)."
+          },
+          {
+            "hypothesis": "Circuit breaker created the duplicates",
+            "reason": "Circuit breakers only short-circuit/open; the observed duplication mechanism is explicitly RetryImpl retrying after SocketTimeoutException, up to the configured 3 attempts."
+          },
+          {
+            "hypothesis": "Gateway was failing requests, so retries were safe",
+            "reason": "Gateway status says requests are being processed despite degraded performance, and docs warn a client timeout does not mean the charge failed; webhooks confirm the timed-out attempts succeeded server-side."
+          }
+        ],
+        "summary": "Duplicate charges were caused by Resilience4j blindly retrying the non-idempotent POST /v1/charges after 2s read timeouts during gateway latency of 2.5-3.2s, with no Idempotency-Key; remove @Retry from createCharge (keep it on GET) and refund duplicates.",
+        "timeline": [
+          {
+            "time": "2026-10-24T11:03:19Z",
+            "event": "BILL-877 added @Retry and @CircuitBreaker to GatewayClient.createCharge (POST /v1/charges)."
+          },
+          {
+            "time": "2026-10-31T17:58:02Z",
+            "event": "Normal capture before incident: ord_90411 succeeded in 640ms with one charge."
+          },
+          {
+            "time": "2026-10-31T18:04:00Z",
+            "event": "Gateway degraded: Charge API p99 latency elevated to 2.5-3.2s, above billing's 2s read-timeout, while requests were still being processed."
+          },
+          {
+            "time": "2026-10-31T18:05:41Z",
+            "event": "Billing retried paymentGateway to attempt 2 after SocketTimeoutException: Read timed out for ord_90502."
+          },
+          {
+            "time": "2026-10-31T18:05:42Z",
+            "event": "Gateway webhooks show two distinct succeeded charges (ch_3Pq9Wb and ch_3Pq9Xk) for ord_90502, same amount 12999 CAD."
+          },
+          {
+            "time": "2026-10-31T18:06:10Z",
+            "event": "Ord_90517 retried to attempt 3 after read timeouts; webhooks show three distinct succeeded charges for ord_90517."
+          },
+          {
+            "time": "2026-10-31T18:08:02Z",
+            "event": "Ord_90544 retried after a read timeout; webhooks show two distinct succeeded charges for ord_90544."
+          },
+          {
+            "time": "2026-10-31T18:09:44Z",
+            "event": "Ledger sync failed with 409 Conflict duplicate external reference ord_90517, a downstream symptom of duplicate charges."
+          },
+          {
+            "time": "2026-10-31T18:10:01Z",
+            "event": "Ord_90560 succeeded in 1880ms with a single webhook charge and no retry, consistent with latency falling below the timeout for that call."
+          }
+        ]
+      },
+      "checks": [
+        {
+          "status": "verified",
+          "found_line": 5
+        },
+        {
+          "status": "verified",
+          "found_line": 18
+        },
+        {
+          "status": "verified",
+          "found_line": 8
+        },
+        {
+          "status": "verified",
+          "found_line": 14
+        },
+        {
+          "status": "verified",
+          "found_line": 3
+        },
+        {
+          "status": "verified",
+          "found_line": 6
+        },
+        {
+          "status": "verified",
+          "found_line": 12
+        },
+        {
+          "status": "verified",
+          "found_line": 3
+        },
+        {
+          "status": "verified",
+          "found_line": 2
+        },
+        {
+          "status": "verified",
+          "found_line": 4
+        },
+        {
+          "status": "verified",
+          "found_line": 6
+        }
+      ],
+      "patch": {
+        "status": "applies",
+        "checked": 4,
+        "missing": []
+      },
+      "score": {
+        "correct": true,
+        "groups": [
+          {
+            "any": [
+              "retry",
+              "retries",
+              "retried",
+              "resilience4j"
+            ],
+            "hit": "retry"
+          },
+          {
+            "any": [
+              "timeout",
+              "timed out"
+            ],
+            "hit": "timeout"
+          },
+          {
+            "any": [
+              "idempoten"
+            ],
+            "hit": "idempoten"
+          }
+        ],
+        "fix_target_correct": true
+      },
+      "stats": {
+        "steps": 9,
+        "seconds": 57.2,
+        "input_tokens": 22021,
+        "output_tokens": 5747,
+        "cost_usd": 0.1589,
+        "models": {
+          "muse-wonder-1.0": {
+            "input": 22021,
+            "cached": 11600,
+            "output": 5747,
+            "calls": 5
+          }
+        }
+      },
+      "revised": false,
+      "sandbox": {
+        "status": "applied",
+        "changed_lines": 1,
+        "diff": "-    @Retry(name = \"paymentGateway\")"
+      },
+      "change_request": {
+        "id": "CR-mw29lybm-c9b9",
+        "kind": "remediation",
+        "title": "Apply fix to src/main/java/com/acme/billing/gateway/GatewayClient.java (billing-service)",
+        "requester": "incidentlens:solo",
+        "risk": "A3",
+        "target": "billing-service:src/main/java/com/acme/billing/gateway/GatewayClient.java",
+        "hash": "e49ced8c43c9bc8bc9388cfd747da542737bd5cef60571479c7edc598f22a285",
+        "policy_version": "policy-2026-11-04.1",
+        "evidence": [
+          "deploy/recent-changes.diff:5",
+          "src/main/java/com/acme/billing/gateway/GatewayClient.java:18",
+          "config/application.yml:8",
+          "config/application.yml:14",
+          "docs/gateway-api-notes.md:3",
+          "docs/gateway-api-notes.md:6",
+          "logs/gateway-webhooks.log:12",
+          "logs/billing-service.log:3",
+          "logs/gateway-webhooks.log:2",
+          "logs/gateway-webhooks.log:4",
+          "logs/billing-service.log:5"
+        ],
+        "required_approvals": 2,
+        "execution": "simulated",
+        "conflicts": [],
+        "state": "awaiting_approval",
+        "created_at": "2026-11-04T15:21:58.018Z",
+        "expires_at": "2026-11-04T17:21:58.018Z"
+      }
+    }
+  ]
+}

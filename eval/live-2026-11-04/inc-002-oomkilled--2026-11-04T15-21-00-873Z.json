@@ -1,0 +1,443 @@
+{
+  "model": "muse-wonder-1.0",
+  "wire": "responses",
+  "events": [
+    {
+      "type": "start",
+      "mode": "solo",
+      "incident": {
+        "id": "inc-002-oomkilled",
+        "title": "order-service pods restarting every few minutes",
+        "service": "order-service",
+        "severity": "SEV-2",
+        "started_at": "2026-10-30T09:20:00Z",
+        "alert": "Prometheus: KubePodCrashLooping order-service (restarts > 5 in 15m). Order placement success rate dropped to 91%. No application errors reported to Sentry."
+      },
+      "model": "muse-wonder-1.0",
+      "wire": "responses",
+      "artifacts": 4,
+      "at": "2026-11-04T15:20:09.051Z",
+      "skills": {
+        "revision": 0,
+        "versions": {
+          "code": 1,
+          "commander": 1,
+          "doctor": 1,
+          "fixer": 1,
+          "platform": 1,
+          "signals": 1,
+          "skeptic": 1,
+          "solo": 1,
+          "change-correlation": 1,
+          "connection-pool-exhaustion": 1,
+          "database-locks-and-slow-queries": 1,
+          "dns-and-service-discovery": 1,
+          "gc-pauses-and-latency": 1,
+          "jvm-container-memory": 1,
+          "kafka-consumer-deserialization": 1,
+          "kubernetes-probes": 1,
+          "redis-cache-latency": 1,
+          "retries-timeouts-idempotency": 1,
+          "spring-transaction-boundaries": 1,
+          "thread-pool-starvation": 1
+        },
+        "candidate": []
+      }
+    },
+    {
+      "type": "thought",
+      "text": "Investigating CrashLooping order-service — gathering evidence on the OOM restarts.",
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "step",
+      "n": 1,
+      "tool": "list_artifacts",
+      "args": {},
+      "label": "Listed 4 artifacts",
+      "ms": 11,
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "step",
+      "n": 2,
+      "tool": "read_artifact",
+      "args": {
+        "path": "deploy/recent-changes.diff"
+      },
+      "label": "Read deploy/recent-changes.diff L1-31",
+      "ms": 14,
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "step",
+      "n": 3,
+      "tool": "read_artifact",
+      "args": {
+        "path": "k8s/deployment.yaml"
+      },
+      "label": "Read k8s/deployment.yaml L1-43",
+      "ms": 10,
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "step",
+      "n": 4,
+      "tool": "read_artifact",
+      "args": {
+        "path": "k8s/events.txt"
+      },
+      "label": "Read k8s/events.txt L1-25",
+      "ms": 12,
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "step",
+      "n": 5,
+      "tool": "read_artifact",
+      "args": {
+        "path": "logs/order-service.log"
+      },
+      "label": "Read logs/order-service.log L1-20",
+      "ms": 13,
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "thought",
+      "text": "Root cause is clear: the new 1024Mi limit equals -Xmx1024m, leaving no room for non-heap memory. Checking runbooks to confirm the sizing guidance before submitting.",
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "step",
+      "n": 6,
+      "tool": "search_runbooks",
+      "args": {
+        "query": "OOMKilled exit 137 JVM Xmx container memory limit non-heap headroom"
+      },
+      "label": "Searched runbooks \"OOMKilled exit 137 JVM Xmx container mem\" → jvm-container-memory",
+      "ms": 2,
+      "model": "muse-wonder-1.0"
+    },
+    {
+      "type": "verification",
+      "round": 1,
+      "checks": [
+        {
+          "status": "verified",
+          "found_line": 21
+        },
+        {
+          "status": "verified",
+          "found_line": 7
+        },
+        {
+          "status": "verified",
+          "found_line": 23
+        },
+        {
+          "status": "verified",
+          "found_line": 32
+        },
+        {
+          "status": "verified",
+          "found_line": 16
+        },
+        {
+          "status": "verified",
+          "found_line": 17
+        },
+        {
+          "status": "verified",
+          "found_line": 18
+        },
+        {
+          "status": "verified",
+          "found_line": 13
+        },
+        {
+          "status": "verified",
+          "found_line": 5
+        },
+        {
+          "status": "verified",
+          "found_line": 24
+        }
+      ],
+      "patch": {
+        "status": "applies",
+        "checked": 6,
+        "missing": []
+      },
+      "accepted": true
+    },
+    {
+      "type": "report",
+      "report": {
+        "category": "configuration",
+        "confidence": 0.95,
+        "evidence": [
+          {
+            "artifact": "deploy/recent-changes.diff",
+            "end_line": 22,
+            "quote": "-              memory: 1536Mi\n+              memory: 1024Mi",
+            "start_line": 21,
+            "supports": "FINOPS-311 lowered the container memory limit from 1536Mi to 1024Mi shortly before the incident."
+          },
+          {
+            "artifact": "deploy/recent-changes.diff",
+            "end_line": 8,
+            "quote": "    order-service p95 container memory over 30 days: 702Mi. Lowering limit\n    to 1024Mi leaves ~45% headroom.",
+            "start_line": 7,
+            "supports": "The right-sizing was based on 30-day p95 (702Mi), which hides peaks/batch work and does not account for heap-max plus non-heap exceeding the new limit."
+          },
+          {
+            "artifact": "k8s/deployment.yaml",
+            "end_line": 23,
+            "quote": "              value: \"-Xms512m -Xmx1024m -XX:+UseG1GC -Xlog:gc*:stdout:time\"",
+            "start_line": 23,
+            "supports": "JVM heap max is hard-coded to 1024m, equal to the new container limit, leaving no room for non-heap memory."
+          },
+          {
+            "artifact": "k8s/deployment.yaml",
+            "end_line": 32,
+            "quote": "              memory: 1024Mi",
+            "start_line": 32,
+            "supports": "Current container memory limit is 1024Mi, identical to -Xmx1024m."
+          },
+          {
+            "artifact": "logs/order-service.log",
+            "end_line": 16,
+            "quote": "2026-10-30T09:51:30.118Z  INFO 1 --- [actuator-metrics] c.a.orders.MemoryReporter : jvm.memory.used heap=741M nonheap=187M (metaspace=142M codecache=38M) threads=212 direct=64M",
+            "start_line": 16,
+            "supports": "Even before heap reaches its 1G max, the process uses 187M non-heap plus 64M direct memory on top of heap, so total RSS must exceed a 1024Mi cgroup limit when heap grows."
+          },
+          {
+            "artifact": "logs/order-service.log",
+            "end_line": 17,
+            "quote": "[2026-10-30T09:51:36.902+0000][info][gc] GC(33) Pause Young (Normal) (G1 Evacuation Pause) 989M->731M(1024M) 30.004ms",
+            "start_line": 17,
+            "supports": "Heap was at 989M of its 1024M max seconds before termination, and GC still reclaimed to 731M (no runaway leak)."
+          },
+          {
+            "artifact": "logs/order-service.log",
+            "end_line": 18,
+            "quote": "--- container terminated (no further output; no java.lang.OutOfMemoryError logged) ---",
+            "start_line": 18,
+            "supports": "Termination was a kernel/cgroup kill, not a JVM heap OutOfMemoryError, explaining absence of Sentry application errors."
+          },
+          {
+            "artifact": "k8s/events.txt",
+            "end_line": 14,
+            "quote": "      Reason:       OOMKilled\n      Exit Code:    137",
+            "start_line": 13,
+            "supports": "Kubernetes terminated the container as OOMKilled with exit 137 (SIGKILL by cgroup memory limit)."
+          },
+          {
+            "artifact": "k8s/events.txt",
+            "end_line": 5,
+            "quote": "33m         Normal    Killing             pod/order-service-5f7d9c8b4-h2kqz      Container order-service exceeded its memory limit",
+            "start_line": 5,
+            "supports": "Repeated Killing events state the container exceeded its memory limit, across multiple pods."
+          },
+          {
+            "artifact": "k8s/events.txt",
+            "end_line": 25,
+            "quote": "order-service-5f7d9c8b4-r6p1d       701m         1019Mi",
+            "start_line": 24,
+            "supports": "kubectl top shows pods at 1019Mi/944Mi, pinned against the 1024Mi limit before kills."
+          }
+        ],
+        "fix": {
+          "artifact": "k8s/deployment.yaml",
+          "explanation": "Smallest reversible fix: restore the pre-FINOPS-311 memory request/limit (1Gi/1536Mi) that worked before 2026-10-30. 1536Mi = 1024m heap + ~512Mi headroom for the observed 187M non-heap + 64M direct + thread stacks/native memory. Longer term, replace fixed -Xmx with -XX:MaxRAMPercentage=70-75 and size from p99 total container RSS, but reverting the limit stops the CrashLoop immediately without changing JVM behaviour.",
+          "patch": "--- a/k8s/deployment.yaml\n+++ b/k8s/deployment.yaml\n@@ -27,8 +27,8 @@\n             requests:\n               cpu: 500m\n-              memory: 768Mi\n+              memory: 1Gi\n             limits:\n               cpu: \"2\"\n-              memory: 1024Mi\n+              memory: 1536Mi"
+        },
+        "next_steps": [
+          "Apply the limit revert (1536Mi) via normal human approval, then watch kubectl top and Restart Count for at least one MonthlyStatementJob batch cycle to confirm pods stay well below the limit.",
+          "Replace fixed -Xmx1024m with -XX:MaxRAMPercentage=70-75 (or keep Xmx but codify limit >= Xmx + 384Mi) so future right-sizing cannot set limit == heap max.",
+          "Re-do FINOPS right-sizing from p99 of total container RSS (heap + non-heap + direct), including batch-job peaks, not 30-day p95; add an alert at >85% of container limit.",
+          "Add the regression test below to CI for all JVM deployments to block limit <= Xmx configurations."
+        ],
+        "regression_test": {
+          "code": "import re, pathlib\n\ndef test_container_limit_exceeds_heap_plus_nonheap():\n    text = pathlib.Path('k8s/deployment.yaml').read_text()\n    xmx_m = int(re.search(r'-Xmx(\\d+)m', text).group(1))\n    # memory limit under 'limits:'\n    limits = text.split('limits:')[1]\n    limit_mi = int(re.search(r'memory:\\s*(\\d+)Mi', limits).group(1))\n    # Non-heap observed in prod: 187M non-heap + 64M direct + thread stacks.\n    # Require at least 384Mi headroom above max heap.\n    assert limit_mi >= xmx_m + 384, (\n        f'container limit {limit_mi}Mi must exceed -Xmx{xmx_m}m by >=384Mi '\n        f'for metaspace/codecache/direct/thread stacks; got {limit_mi - xmx_m}Mi')\n",
+          "language": "python",
+          "name": "test_container_limit_exceeds_heap_plus_nonheap"
+        },
+        "root_cause": "Trigger: FINOPS-311 (2026-10-30T08:55:10Z) lowered order-service memory limit 1536Mi->1024Mi and request 1Gi->768Mi based on 30-day p95 of 702Mi. Mechanism: JAVA_OPTS still hard-codes -Xmx1024m, so heap max alone equals the entire 1024Mi cgroup limit. Total RSS = heap (growing to 989M, max 1G) + non-heap 187M (metaspace 142M + codecache 38M) + direct 64M + 212 thread stacks/native memory, which necessarily exceeds 1024Mi; peaks such as MonthlyStatementJob batch size=5000 push heap up faster. The kernel therefore cgroup-OOMKills the container (exit 137) before the JVM can log OutOfMemoryError. Impact: pods CrashLoop (Restart Count 7, repeated Killing events), order placement success falls to 91% with no Sentry app errors because the process is SIGKILLed externally.",
+        "ruled_out": [
+          {
+            "hypothesis": "Java heap leak / JVM OutOfMemoryError",
+            "reason": "No java.lang.OutOfMemoryError logged before termination (log line 18), and GC repeatedly reclaims heap (989M->731M, 961M->702M), so heap is not monotonically leaking; the kill is at cgroup level (OOMKilled exit 137)."
+          },
+          {
+            "hypothesis": "Slow-query change ORD-1290 (Oct 29) caused the outage",
+            "reason": "That change only enables logging above 500ms; the logged slow queries are 540-701ms and orders still complete (placeOrder tookMs=88). It correlates with neither the 08:55 limit change nor memory-limit Killing events."
+          },
+          {
+            "hypothesis": "GC pauses / JVM crash or liveness-probe failure",
+            "reason": "GC pauses are 12-34ms (normal), the app starts in ~12s and serves traffic; Kubernetes events give reason OOMKilled/exceeded memory limit, not probe failure or segfault."
+          },
+          {
+            "hypothesis": "MonthlyStatementJob batch is the root cause by itself",
+            "reason": "The batch (size=5000 at 09:48:51) is a peak contributor that hastens reaching the limit, but the same workload ran under the previous 1536Mi limit; the regression is the limit being cut to equal -Xmx, leaving zero non-heap headroom for any peak."
+          }
+        ],
+        "summary": "FINOPS-311 cut the memory limit to 1024Mi, exactly equal to -Xmx1024m, so heap + 187M non-heap + 64M direct memory exceeds the cgroup limit and the kernel OOMKills (exit 137) the pods; revert the limit to 1536Mi.",
+        "timeline": [
+          {
+            "event": "FINOPS-311 commit lowers memory request 1Gi->768Mi and limit 1536Mi->1024Mi, citing 30-day p95 of 702Mi",
+            "time": "2026-10-30T08:55:10Z"
+          },
+          {
+            "event": "Incident starts: Prometheus KubePodCrashLooping order-service, order success drops to 91%",
+            "time": "2026-10-30T09:20:00Z"
+          },
+          {
+            "event": "Pod starts; GC init shows Heap Max Capacity 1G (-Xmx1024m) against a 1024Mi container limit",
+            "time": "2026-10-30T09:44:02Z"
+          },
+          {
+            "event": "MonthlyStatementJob building statement batch size=5000; heap climbs 811M->918M->961M in GC logs",
+            "time": "2026-10-30T09:48:51Z"
+          },
+          {
+            "event": "MemoryReporter: heap=741M nonheap=187M direct=64M threads=212 — non-heap alone pushes total over the limit once heap grows",
+            "time": "2026-10-30T09:51:30Z"
+          },
+          {
+            "event": "GC heap 989M->731M(1024M), then container terminated with no OutOfMemoryError; kubectl shows Last State OOMKilled exit 137, Finished 09:51:37, Restart Count 7; new JVM starts 09:51:44 and cycle repeats",
+            "time": "2026-10-30T09:51:36Z"
+          }
+        ]
+      },
+      "checks": [
+        {
+          "status": "verified",
+          "found_line": 21
+        },
+        {
+          "status": "verified",
+          "found_line": 7
+        },
+        {
+          "status": "verified",
+          "found_line": 23
+        },
+        {
+          "status": "verified",
+          "found_line": 32
+        },
+        {
+          "status": "verified",
+          "found_line": 16
+        },
+        {
+          "status": "verified",
+          "found_line": 17
+        },
+        {
+          "status": "verified",
+          "found_line": 18
+        },
+        {
+          "status": "verified",
+          "found_line": 13
+        },
+        {
+          "status": "verified",
+          "found_line": 5
+        },
+        {
+          "status": "verified",
+          "found_line": 24
+        }
+      ],
+      "patch": {
+        "status": "applies",
+        "checked": 6,
+        "missing": []
+      },
+      "score": {
+        "correct": true,
+        "groups": [
+          {
+            "any": [
+              "xmx",
+              "heap",
+              "maxramPercentage"
+            ],
+            "hit": "xmx"
+          },
+          {
+            "any": [
+              "limit",
+              "1024mi",
+              "container memory"
+            ],
+            "hit": "limit"
+          },
+          {
+            "any": [
+              "oomkill",
+              "oom-kill",
+              "oom kill",
+              "137",
+              "kernel"
+            ],
+            "hit": "oomkill"
+          }
+        ],
+        "fix_target_correct": true
+      },
+      "stats": {
+        "steps": 6,
+        "seconds": 51.8,
+        "input_tokens": 15108,
+        "output_tokens": 5600,
+        "cost_usd": 0.1555,
+        "models": {
+          "muse-wonder-1.0": {
+            "input": 15108,
+            "cached": 4456,
+            "output": 5600,
+            "calls": 4
+          }
+        }
+      },
+      "revised": false,
+      "sandbox": {
+        "status": "applied",
+        "changed_lines": 4,
+        "diff": "+              memory: 1Gi\n-              memory: 768Mi\n+              memory: 1536Mi\n-              memory: 1024Mi"
+      },
+      "change_request": {
+        "id": "CR-mw29kq7h-c2ea",
+        "kind": "remediation",
+        "title": "Apply fix to k8s/deployment.yaml (order-service)",
+        "requester": "incidentlens:solo",
+        "risk": "A3",
+        "target": "order-service:k8s/deployment.yaml",
+        "hash": "54749a54326ecc78d0a5b094ae3bda63494fb90a718a5cd974747285b3aaaf52",
+        "policy_version": "policy-2026-11-04.1",
+        "evidence": [
+          "deploy/recent-changes.diff:21",
+          "deploy/recent-changes.diff:7",
+          "k8s/deployment.yaml:23",
+          "k8s/deployment.yaml:32",
+          "logs/order-service.log:16",
+          "logs/order-service.log:17",
+          "logs/order-service.log:18",
+          "k8s/events.txt:13",
+          "k8s/events.txt:5",
+          "k8s/events.txt:24"
+        ],
+        "required_approvals": 2,
+        "execution": "simulated",
+        "conflicts": [],
+        "state": "awaiting_approval",
+        "created_at": "2026-11-04T15:21:00.845Z",
+        "expires_at": "2026-11-04T17:21:00.845Z"
+      }
+    }
+  ]
+}

@@ -147,6 +147,7 @@ async function select(id) {
         <span class="status" id="status"></span>
       </div>
     </div>
+    <div id="replay-note"></div>
     <div id="warroom"></div>
     <div id="result"></div>`;
   document.querySelectorAll('.mode button').forEach((b) => b.addEventListener('click', () => setMode(b.dataset.mode)));
@@ -194,6 +195,7 @@ function reset() {
   hyps.clear();
   $('#trail').innerHTML = `<ol class="steps" id="steps"></ol>`;
   $('#result').innerHTML = '';
+  $('#replay-note').innerHTML = '';
   $('#warroom').innerHTML = state.mode === 'warroom' ? warroomSkeleton() : '';
   showTab('trail');
 }
@@ -218,7 +220,8 @@ async function replayRun(id, run) {
   reset();
   setBusy(true, 'Replaying');
   const start = run.events.find((e) => e.type === 'start');
-  $('#result').innerHTML = `<div class="notice replay">Replay of a recorded run (${esc(start?.model ?? run.model)}) from ${esc(new Date(start?.at ?? Date.now()).toLocaleString())}. Choose Investigate for a live run.</div>`;
+  // Above the War Room panel, so the label stays on screen while a replay plays.
+  $('#replay-note').innerHTML = `<div class="notice replay">Replay of a recorded run (${esc(start?.model ?? run.model)}) from ${esc(new Date(start?.at ?? Date.now()).toLocaleString())}. Choose Investigate for a live run.</div>`;
   const pace = state.mode === 'warroom' ? 140 : 220;
   for (const e of run.events) {
     if (state.current?.id !== id) return;

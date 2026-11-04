@@ -9,11 +9,17 @@ the source, every patch is applied to an isolated copy, and every change, includ
 IncidentLens makes to itself, goes through a governance gate that the AI cannot approve or bypass.
 
 > **Status, 2026-11-04.** Every feature below is implemented and covered by 53 automated tests
-> (CI on every push). **No live Muse run has been recorded yet:** the Meta Model API returns
-> `HTTP 402 billing_not_configured` for this account. The tests and the offline demo use a
-> scripted stand-in model, labelled as such in the UI. See
-> [docs/IMPLEMENTATION_GAP_MATRIX.md](docs/IMPLEMENTATION_GAP_MATRIX.md) for exactly what is
-> verified, simulated, partial or missing.
+> (CI on every push), which use a scripted stand-in model. **First live Muse evaluation,
+> 2026-11-04**, on `muse-wonder-1.0` and `muse-spark-1.3`, one run per incident:
+> - Solo mode found the root cause in 5 of 5 incidents, War Room mode in 5 of 5.
+> - All 109 citations in the final reports were verified.
+> - The War Room put one fix in a different file than the answer key (4 of 5).
+> - Both suites together cost $4.22.
+>
+> That is n = 1 on five incidents written by the authors, not a benchmark: see
+> [live results](docs/EVALUATION_PROTOCOL.md#live-results-2026-11-04). The offline demo uses a
+> scripted model, labelled as such. [docs/IMPLEMENTATION_GAP_MATRIX.md](docs/IMPLEMENTATION_GAP_MATRIX.md)
+> says exactly what is verified, simulated, partial or missing.
 
 ## What it does
 
@@ -124,8 +130,10 @@ cannot read (enforced and tested).
 ## Limits, stated plainly
 
 - A verified citation proves the quoted text exists at the cited lines. It does not prove the conclusion drawn from it.
-- Live Muse behaviour (diagnosis quality, tool-call compatibility, cost) is unverified until
-  billing works.
+- Live Muse results so far are one run per incident on five incidents written by the authors,
+  scored by keyword groups. They show the system works end to end on Muse; they are not a
+  benchmark, and there is no baseline yet. On these incidents the War Room was no more accurate
+  than solo mode and cost about four times as much.
 - Remediation execution is simulated. Patches are applied to an isolated copy, but not compiled
   or tested.
 - Prompt-injection detection is a pattern-based alert, not a guarantee. Safety comes from the

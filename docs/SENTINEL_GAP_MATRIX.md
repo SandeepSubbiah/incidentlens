@@ -9,8 +9,9 @@ as of 2026-11-04, commit after `72c71c6`.
 - **Implemented:** exists in code, with no automated test.
 - **Partial:** some of the capability exists. The gap is stated.
 - **Missing:** not built.
-- **Blocked:** cannot be verified until an external dependency is fixed. Today that means live
-  Muse inference, which returns `402 billing_not_configured`.
+- **Blocked:** cannot be verified until an external dependency is fixed. Live Muse inference was
+  blocked (`402 billing_not_configured`) until 2026-11-04 10:13 ET. Rows that needed it now state
+  what the first live evaluation measured (n = 1 per incident and mode).
 
 "Tested" never means tested against live Muse. A framework reference below means the
 capability relates to that item. It does not mean the item is satisfied.
@@ -24,7 +25,7 @@ capability relates to that item. It does not mean the item is satisfied.
 | Scenario scope, consent and budget metadata | Missing | |
 | Opt-in garak, PyRIT or Promptfoo adapters | Missing | |
 | Isolation of attack fixtures from demo traffic | Partial | Synthetic runs flagged `synthetic: true`; offline demo uses separate folders; no general scope model |
-| Attack model resistance measured on a live model | Blocked | Needs live Muse |
+| Attack model resistance measured on a live model | Partial | inc-005's planted injection: quarantined, and the diagnosis stayed correct in 2 live runs (one per mode). No attack suite |
 
 ## 2. Hallucination, factuality, citations and task drift
 
@@ -39,7 +40,7 @@ capability relates to that item. It does not mean the item is satisfied.
 | Calibration (Brier score, ECE) | Missing | No trusted labels at scale |
 | Focus governor and drift detection (S24, S25) | Partial | Per-task turn budgets, nudges, global turn, cost and time budgets with forced conclusion; no drift detection or checkpoint and replan |
 | Metrics with denominators and intervals | Partial | Health shows n and enforces a minimum of 5 runs; no intervals |
-| Live hallucination rates | Blocked | Needs live Muse |
+| Live hallucination rates | Partial | The verifier refused 5 of 160 posted facts in 6 live War Room runs (3 misquotes, 2 quotes cut short with "…"). No rate study, no claim-level check |
 
 ## 3. Prompt injection, RAG poisoning, memory poisoning and tool misuse
 
@@ -74,7 +75,7 @@ capability relates to that item. It does not mean the item is satisfied.
 |---|---|---|
 | Cloud finding importers (ASFF, Defender, SCC) | Missing | |
 | Exposure graph (S17) | Missing | |
-| Kubernetes reasoning in incidents (probes, limits, events) | Implemented | Incident content exists and runbook retrieval is tested; agent quality blocked |
+| Kubernetes reasoning in incidents (probes, limits, events) | Implemented | Incident content exists and runbook retrieval is tested; live: inc-002 and inc-005 diagnosed correctly in both modes (n = 1) |
 | Cloud mutations | Not applicable | None exist; specified to stay off |
 
 ## 6. Honeytokens, deception and containment
@@ -105,8 +106,8 @@ capability relates to that item. It does not mean the item is satisfied.
 | Capability | Status | Evidence or gap |
 |---|---|---|
 | Deterministic scoring against hidden answer keys | Tested | `core.test.ts` |
-| Eval harness (solo and War Room) | Implemented | `src/eval.ts`; no live results |
-| Live evaluation results | Blocked | |
+| Eval harness (solo and War Room) | Implemented | `src/eval.ts`; first live results 2026-11-04 |
+| Live evaluation results | Partial | n = 1: root cause 5/5 in both modes, fix target 5/5 solo and 4/5 War Room; no repetitions or baseline |
 | Baselines, ablations, repetitions | Missing | Protocol in EVALUATION_PROTOCOL.md |
 | Independent evaluator model | Missing | Evaluator uses the same model as the proposer |
 
@@ -133,7 +134,7 @@ capability relates to that item. It does not mean the item is satisfied.
 
 | Capability | Status | Evidence or gap |
 |---|---|---|
-| Patch proposal with a regression test from incidents | Implemented | Quality blocked |
+| Patch proposal with a regression test from incidents | Implemented | Live: 9 of 10 fixes targeted the answer key's file and all applied to an isolated copy; none compiled or tested |
 | Patch application to an isolated copy, invalid hunk rejected (S27) | Tested | `governance.test.ts` |
 | `git apply --check`, compile and run tests in a container | Missing | |
 | Coding reliability lab (multi-file tasks, PR workflow) | Missing | |
@@ -155,7 +156,7 @@ capability relates to that item. It does not mean the item is satisfied.
 
 | ID | Scenario | Status |
 |---|---|---|
-| S01 | Log instructs a false root cause | Partial: marking and read-only tools tested; model resistance blocked |
+| S01 | Log instructs a false root cause | Partial: marking and read-only tools tested; model resisted in 2 live runs (n = 1 per mode) |
 | S02 | Fake approval inside an issue | Partial: approvals only from credentials (tested); no issue fixture |
 | S03 | Runbook claims to be policy | Partial: runbooks labelled guidance; no trust tiers |
 | S04 | Fake credential in a log | Missing: no evidence redaction |
@@ -215,7 +216,7 @@ Ordered by priority, then dependency. Each item is a GitHub issue labelled `phas
 | P-01 | P0 | [#1 Durable governance store with multi-instance safety](https://github.com/SandeepSubbiah/incidentlens/issues/1) | — |
 | P-02 | P0 | [#2 Identity, roles and tenant isolation](https://github.com/SandeepSubbiah/incidentlens/issues/2) | P-01 |
 | P-03 | P0 | [#3 Isolated patch execution: apply, build, test in a container](https://github.com/SandeepSubbiah/incidentlens/issues/3) | — |
-| P-04 | P0 | [#4 Live Muse evaluation baseline](https://github.com/SandeepSubbiah/incidentlens/issues/4) | Meta billing |
+| P-04 | P0 | [#4 Live Muse evaluation baseline](https://github.com/SandeepSubbiah/incidentlens/issues/4) | Unblocked 2026-11-04; one repetition done |
 | P-05 | P1 | [#5 Sentinel scenario registry and `npm run sentinel:test`](https://github.com/SandeepSubbiah/incidentlens/issues/5) | — |
 | P-06 | P1 | [#6 Claim verifier and AI Truth metrics](https://github.com/SandeepSubbiah/incidentlens/issues/6) | P-05 |
 | P-07 | P1 | [#7 Focus governor for task drift](https://github.com/SandeepSubbiah/incidentlens/issues/7) | P-05 |
