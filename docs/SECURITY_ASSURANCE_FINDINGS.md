@@ -1,5 +1,12 @@
 # Security assurance findings
 
+> **Post-merge note (November 4, 2026):** The measurements below are the *historical
+> 11:38–12:00 ET security pass*. The repository now also contains the separately tested
+> continuity router merged in PR #22; GitHub Actions on its final head passed **103/103 tests**.
+> That does not resolve the six open Sentinel smoke findings listed in this report.
+> See [feature status](FEATURE_STATUS.md) and [router limitations](CONTINUITY_PROTOTYPE.md).
+
+
 The first evidence-based security pass over IncidentLens, run on 2026-11-04 between 11:38 and
 12:00 ET. It follows the Sentinel security assurance execution prompt of the same date: §1 audit,
 §12 pre-deadline slice. That prompt is not in this repository.
