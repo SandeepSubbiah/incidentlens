@@ -1,3 +1,4 @@
+import { incidentSource, provenanceNow } from '../provenance.ts';
 import { incidentBrief, learnCase, quarantineTracker, saveRun, stats, systemPrompt } from '../agent.ts';
 import { loadConstitution } from '../guard/constitution.ts';
 import { listArtifacts, loadGroundTruth, loadMeta, type LiveUpdate } from '../incidents.ts';
@@ -90,7 +91,7 @@ export async function runWarRoom(incidentId: string, emit: Emit, opts: WarRoomOp
     const board = new Board(incidentId, send);
     const ctx: ToolContext = { caseId: incidentId, knowledge: buildKnowledge(view, await loadCases()), onQuarantine: quarantineTracker(send) };
     const brief = incidentBrief(meta, artifacts.length);
-    send({ type: 'start', mode: 'warroom', incident: meta, model: MODELS.deep, models: MODELS, tiers: TIERS, wire: WIRE, artifacts: artifacts.length, concurrency, at: new Date().toISOString(), skills: { revision: view.revision, versions: view.versions(), candidate: view.overridden } });
+    send({ type: 'start', mode: 'warroom', incident: meta, provenance: provenanceNow(incidentSource(meta)), model: MODELS.deep, models: MODELS, tiers: TIERS, wire: WIRE, artifacts: artifacts.length, concurrency, at: new Date().toISOString(), skills: { revision: view.revision, versions: view.versions(), candidate: view.overridden } });
 
     const agents = new Map<Role, Agent>(ROLES.map((r) => [r, { role: r, current: null, seen: 0, nudged: false, rejections: 0, fixRejected: false }]));
     const inflight = new Map<Role, Promise<Outcome>>();

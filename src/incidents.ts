@@ -25,6 +25,8 @@ export interface IncidentMeta {
   started_at: string;
   alert: string;
   updates?: LiveUpdate[];
+  // 'synthetic' for authored test cases; a real incident would be 'imported'.
+  provenance?: 'synthetic' | 'imported';
 }
 
 export interface GroundTruth {

@@ -1,5 +1,6 @@
 import { propose } from './governance/changes.ts';
 import type { IncidentMeta } from './incidents.ts';
+import { incidentSource, provenanceNow } from './provenance.ts';
 import { sandboxApply, type SandboxResult } from './sandbox.ts';
 
 // Turns a report's proposed fix into something a human can govern: the patch is first applied
@@ -18,6 +19,7 @@ export async function gateRemediation(caseId: string, meta: IncidentMeta, report
     target: `${meta.service}:${fix.artifact}`,
     payload: { incident: caseId, artifact: fix.artifact, patch: fix.patch, explanation: fix.explanation ?? '' },
     evidence: (report.evidence ?? []).map((e: any) => `${e.artifact}:${e.start_line}`),
+    provenance: provenanceNow(incidentSource(meta)),
   });
   const { payload, decisions, ...summary } = cr;
   return { sandbox, change_request: summary };

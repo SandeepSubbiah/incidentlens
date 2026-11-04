@@ -13,7 +13,16 @@ export const MODELS: Record<Tier, string> = {
 };
 export const MODEL = MODELS.deep;
 export const WIRE = (process.env.LLM_WIRE ?? 'responses') as 'responses' | 'messages';
-const BASE_URL = (process.env.MODEL_BASE_URL ?? 'https://api.meta.ai').replace(/\/+$/, '');
+const META_API = 'https://api.meta.ai';
+const BASE_URL = (process.env.MODEL_BASE_URL ?? META_API).replace(/\/+$/, '');
+
+// Live means the requests go to the Meta Model API. Any other base URL (the offline demo's local
+// scripted model, tests) is not live, whatever the configured model names say.
+export function classifyEndpoint(url: string) {
+  const u = new URL(url);
+  return { host: u.host, live: u.origin === META_API };
+}
+export const modelEndpoint = () => classifyEndpoint(BASE_URL);
 const TIMEOUT_MS = 180_000;
 const BREAKER_THRESHOLD = 3;
 const BREAKER_COOLDOWN_MS = Number(process.env.BREAKER_COOLDOWN_MS ?? 60_000);
@@ -107,12 +116,27 @@ function retryAfterMs(res: Response, attempt: number): number {
 async function post(path: string, model: string, body: unknown, headers: Record<string, string>, onHeal: (h: Heal) => void): Promise<any> {
   for (let attempt = 1; ; attempt++) {
     if (inOutage(model)) throw new ApiError(503, `simulated outage of ${model} (chaos)`);
-    const res = await fetch(`${BASE_URL}${path}`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey()}`, ...headers },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(TIMEOUT_MS),
-    });
+    let res: Response;
+    try {
+      res = await fetch(`${BASE_URL}${path}`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey()}`, ...headers },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+      });
+    } catch (err: any) {
+      // The connection failed before any response, e.g. a reused keep-alive socket the server had
+      // closed. A model call has no side effect here beyond cost, so one quick resend is safe.
+      // Timeouts are not resent: that would double an already long wait.
+      const cause = err?.cause?.code ?? err?.cause?.name;
+      if (err instanceof TypeError && attempt < 2) {
+        onHeal({ kind: 'transport-retry', detail: `${model}: connection failed (${cause ?? err.message}); resending once` });
+        await new Promise((r) => setTimeout(r, 300));
+        continue;
+      }
+      if (err instanceof TypeError && cause) err.message = `${err.message} (${cause})`;
+      throw err;
+    }
     if (res.ok) return res.json();
     const text = await res.text();
     if (res.status === 429 && attempt < 4) {

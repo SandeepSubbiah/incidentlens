@@ -3,6 +3,7 @@
   "title": "order-service pods restarting every few minutes",
   "service": "order-service",
   "severity": "SEV-2",
+  "provenance": "synthetic",
   "started_at": "2026-10-30T09:20:00Z",
   "alert": "Prometheus: KubePodCrashLooping order-service (restarts > 5 in 15m). Order placement success rate dropped to 91%. No application errors reported to Sentry."
 }

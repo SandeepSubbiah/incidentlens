@@ -67,10 +67,10 @@ Plan B only scripts inc-001.
 
   In Plan B the scripted line is a log line that doesn't exist:
   > "An agent tried to post a log line that doesn't exist. It never reached the shared board."
-- When the red **Live update from Support** appears (part of the synthetic incident's timeline),
-  point at the **paused … for … (P0)** line:
-  > "Customer impact is spreading, so the team stops the bleeding first, then resumes the root
-  > cause with what it missed."
+- When the red **Scripted update from Support** appears, point at the **paused … for … (P0)**
+  line. The update is part of the synthetic incident's script, and the screen says so:
+  > "In this test incident, a scripted message says customer impact is spreading, so the team
+  > stops the bleeding first, then resumes the root cause with what it missed."
 
 **1:00–1:30 — The skeptic and the evidence.**
 - Point at the Skeptic's verdict, **Review of H1: stands**. Live runs usually show the Skeptic
@@ -106,11 +106,30 @@ Plan B only scripts inc-001.
   > audited."
 
 **2:45–3:00 — Close.**
-- **Plan A:** "Open source, 60 automated tests. On live Muse, it diagnosed all five of our test
+- **Plan A:** "Open source, 69 automated tests. On live Muse, it diagnosed all five of our test
   incidents correctly in solo mode, with every cited quote verified. Evidence first, humans in
   charge." Only say this if the numbers in `docs/EVALUATION_PROTOCOL.md` still say so.
-- **Plan B:** "Open source, 60 automated tests. It is built for Muse Wonder and Muse Spark; this
+- **Plan B:** "Open source, 69 automated tests. It is built for Muse Wonder and Muse Spark; this
   recording used a scripted model. Evidence first, humans in charge."
+
+## Optional: continuity beat (Plan A, about 20 seconds)
+
+Use it only if you can shorten the live run in editing. It takes about 90 seconds live. A good
+place is in place of part of the self-repair segment.
+
+1. On the Health page, click **Simulate deep-model outage**.
+   > "We cut off Muse Wonder on purpose."
+2. Open inc-001, choose **Solo agent**, click **Investigate**. Cut to the result.
+   - Point at the trail's **Reflex · Failover** and **Circuit opened** lines.
+   - Point at **Answered by muse-spark-1.3** in the report.
+   > "Wonder is down, so the work moves to Spark, and the report names the model that actually
+   > answered. The outage is simulated; Spark's answer is real."
+3. Back on the Health page, point at the **Evolution ledger** entry marked **simulated fault**.
+   > "Every fault becomes a proposal linked to its evidence. It changes nothing on its own."
+4. Click **Clear faults**. Wait at least 60 seconds before anything that uses Wonder, including
+   **Run self-repair**. The circuit stays open until then and Wonder work would go to Spark.
+
+Do not say it is zero-downtime or that streaming resumes: neither is built.
 
 ## After recording (Plan A)
 

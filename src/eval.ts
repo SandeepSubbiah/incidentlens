@@ -3,7 +3,7 @@ import path from 'node:path';
 import { investigate } from './agent.ts';
 import { runWarRoom } from './warroom/run.ts';
 import { listIncidents } from './incidents.ts';
-import { MODEL, WIRE } from './llm.ts';
+import { MODEL, modelEndpoint, WIRE } from './llm.ts';
 
 // Runs the agent over every incident (or those named on the command line) and scores it
 // against the hidden ground truth. Usage: node src/eval.ts [incident-id ...]
@@ -49,6 +49,9 @@ const summary = {
   model: MODEL,
   mode,
   wire: WIRE,
+  endpoint: modelEndpoint().host,
+  inference: modelEndpoint().live ? 'live' : 'scripted',
+  incidents_provenance: [...new Set(incidents.map((i) => i.provenance ?? 'unstated'))],
   at: new Date().toISOString(),
   incidents: rows.length,
   errors: rows.length - scored.length,

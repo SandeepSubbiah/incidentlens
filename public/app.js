@@ -1,5 +1,20 @@
 const $ = (sel, root = document) => root.querySelector(sel);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+// Where a record's data came from (src/provenance.ts). Anything simulated or synthetic is named as
+// such; a record made before provenance was recorded says so, rather than passing as real.
+const INCIDENT_LABEL = { synthetic: ['queued', 'synthetic incident'], imported: ['verified', 'imported incident'], 'self-case': ['open', 'self-case'], unstated: ['cancelled', 'incident source not stated'] };
+const INFERENCE_LABEL = { live: ['verified', 'live Muse'], scripted: ['queued', 'scripted model, not Muse'], none: ['cancelled', 'no model'] };
+const tag = ([cls, text]) => `<span class="stamp ${cls}">${esc(text)}</span>`;
+function provenanceTags(p) {
+  if (!p) return tag(['cancelled', 'source not recorded']);
+  return [
+    tag(INCIDENT_LABEL[p.incident] ?? INCIDENT_LABEL.unstated),
+    tag(INFERENCE_LABEL[p.inference] ?? ['cancelled', 'inference not recorded']),
+    ...(p.simulated_faults ?? []).map((f) => tag(['queued', `simulated fault: ${f}`])),
+    ...(p.synthetic_runs ? [tag(['queued', `${p.synthetic_runs} synthetic (seeded) runs`])] : []),
+  ].join(' ');
+}
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const STAMP = {
@@ -20,6 +35,7 @@ const HEAL_LABEL = {
   'param-negotiation': 'Adapted request',
   'history-compat': 'Adapted history',
   'rate-limited': 'Rate limited',
+  'transport-retry': 'Connection retry',
 };
 
 const state = { config: {}, session: {}, incidents: [], current: null, mode: 'solo', abort: null, tasks: new Map(), facts: [], quarantined: 0, rejected: 0 };
@@ -59,7 +75,7 @@ async function init() {
   state.config ??= {};
   renderHeader();
   $('#incidents').innerHTML = state.incidents
-    .map((i) => `<li><button data-id="${esc(i.id)}"><span class="inc-meta"><span class="sev sev-${esc(i.severity)}">${esc(i.severity)}</span> · ${esc(i.service)}</span><span>${esc(i.title)}</span></button></li>`)
+    .map((i) => `<li><button data-id="${esc(i.id)}"><span class="inc-meta"><span class="sev sev-${esc(i.severity)}">${esc(i.severity)}</span> · ${esc(i.service)}${i.provenance === 'synthetic' ? ' · synthetic' : ''}</span><span>${esc(i.title)}</span></button></li>`)
     .join('');
   $('#incidents').addEventListener('click', (e) => {
     const b = e.target.closest('button[data-id]');
@@ -75,7 +91,8 @@ async function init() {
 
 function renderHeader() {
   const m = state.config.models ?? {};
-  $('#model').textContent = `deep ${m.deep ?? '?'} · fast ${m.fast ?? '?'} · ${state.config.wire ?? ''} API${state.config.key ? '' : ' · no API key'}`;
+  const ep = state.config.endpoint;
+  $('#model').textContent = `deep ${m.deep ?? '?'} · fast ${m.fast ?? '?'} · ${state.config.wire ?? ''} API${ep ? (ep.live ? ' · live Meta API' : ` · scripted endpoint ${ep.host}, not Muse`) : ''}${state.config.key ? '' : ' · no API key'}`;
   const acc = $('#access');
   if (!state.config.gated) acc.innerHTML = `<span class="chip">Open access</span>`;
   else if (state.session?.sub) acc.innerHTML = `<span class="chip">${esc(state.session.sub)} · ${esc(state.session.role)} · ${state.session.runs_left} live runs left</span>`;
@@ -111,7 +128,7 @@ async function renderScoreboard() {
     if (!ev) return '';
     const byId = Object.fromEntries(ev.rows.map((r) => [r.id, r]));
     return `<div class="headline">${ev.correct}/${ev.incidents}</div>
-      <div class="hint">${label}: root causes correct against hidden answer keys</div>
+      <div class="hint">${label}: root causes correct against hidden answer keys, on ${ev.incidents} ${state.incidents.every((i) => i.provenance === 'synthetic') ? 'synthetic ' : ''}incidents${ev.inference ? ` · ${ev.inference === 'live' ? 'live Muse' : 'scripted model, not Muse'}` : ''}</div>
       <table>${state.incidents.map((i) => {
         const r = byId[i.id];
         const cell = !r ? '—' : r.error ? 'error' : `${r.correct ? '✓' : '✗'} ${r.evidence_verified}/${r.evidence_total}`;
@@ -134,7 +151,7 @@ async function select(id) {
   const c = state.current;
   $('#case').innerHTML = `
     <div class="alert-head">
-      <span class="inc-meta"><span class="sev sev-${esc(c.severity)}">${esc(c.severity)}</span> · ${esc(c.service)} · started ${esc(new Date(c.started_at).toUTCString().slice(5, 22))} UTC</span>
+      <span class="inc-meta"><span class="sev sev-${esc(c.severity)}">${esc(c.severity)}</span> · ${esc(c.service)} · started ${esc(new Date(c.started_at).toUTCString().slice(5, 22))} UTC</span> ${tag(INCIDENT_LABEL[c.provenance] ?? INCIDENT_LABEL.unstated)}
       <h1>${esc(c.title)}</h1>
       <p class="alert-text">${esc(c.alert)}</p>
       <div class="mode" role="radiogroup" aria-label="Investigation mode">
@@ -191,6 +208,7 @@ function reset() {
   state.tasks.clear();
   state.facts = [];
   state.quarantined = 0;
+  state.provenance = undefined;
   state.rejected = 0;
   hyps.clear();
   $('#trail').innerHTML = `<ol class="steps" id="steps"></ol>`;
@@ -221,7 +239,7 @@ async function replayRun(id, run) {
   setBusy(true, 'Replaying');
   const start = run.events.find((e) => e.type === 'start');
   // Above the War Room panel, so the label stays on screen while a replay plays.
-  $('#replay-note').innerHTML = `<div class="notice replay">Replay of a recorded run (${esc(start?.model ?? run.model)}) from ${esc(new Date(start?.at ?? Date.now()).toLocaleString())}. Choose Investigate for a live run.</div>`;
+  $('#replay-note').innerHTML = `<div class="notice replay">Replay of a recorded run (${esc(start?.model ?? run.model)}) from ${esc(new Date(start?.at ?? Date.now()).toLocaleString())}. Choose Investigate for a live run. ${provenanceTags(start?.provenance)}</div>`;
   const pace = state.mode === 'warroom' ? 140 : 220;
   for (const e of run.events) {
     if (state.current?.id !== id) return;
@@ -297,6 +315,7 @@ function handle(e, id, isReplay = false) {
   const ms = (x) => (x.ms !== undefined ? `${x.ms}ms` : '');
   switch (e.type) {
     case 'start':
+      state.provenance = e.provenance;
       if (e.mode === 'warroom') {
         hyps.clear();
         for (const r of ROLES) {
@@ -353,10 +372,13 @@ function handle(e, id, isReplay = false) {
       line(roleTag(ROLE_LABEL[m.from] ? m.from : null).replace('Agent', esc(m.from)), `<span class="msg">→ ${esc(to)} (${esc(m.kind)}): ${esc(m.text.slice(0, 220))}</span>`);
       break;
     }
-    case 'live_update':
-      $('#wr-updates')?.insertAdjacentHTML('beforeend', `<div class="notice bad"><b>Live update from ${esc(e.from)} (P${e.priority}):</b> ${esc(e.text)}</div>`);
-      verdict('bad', `Live update from ${esc(e.from)}: ${esc(e.text)}`);
+    case 'live_update': {
+      // Updates in an authored incident are part of its script, not messages from real people.
+      const scripted = (state.provenance?.incident ?? state.current?.provenance) === 'synthetic';
+      $('#wr-updates')?.insertAdjacentHTML('beforeend', `<div class="notice bad"><b>${scripted ? 'Scripted update' : 'Live update'} from ${esc(e.from)} (P${e.priority}):</b> ${esc(e.text)}${scripted ? ' <span class="hint">(part of the synthetic incident, not a real message)</span>' : ''}</div>`);
+      verdict('bad', `${scripted ? 'Scripted update' : 'Live update'} from ${esc(e.from)}: ${esc(e.text)}`);
       break;
+    }
     case 'escalate':
       verdict('warn', `${esc(ROLE_LABEL[e.role])} escalated from ${esc(e.from)} to ${esc(e.to)}: ${esc(e.reason)}`);
       break;
@@ -412,6 +434,9 @@ function renderReport(e, isReplay) {
   const keep = isReplay ? $('#result').innerHTML : '';
   const conf = Math.round((r.confidence ?? 0) * 100);
   const cost = e.stats.cost_usd !== undefined ? ` · <strong>$${e.stats.cost_usd.toFixed(3)}</strong>` : '';
+  // Older records only know the requested model; say so rather than imply the API confirmed it.
+  const models = Object.entries(e.stats.models ?? {});
+  const answered = models.length ? `<span>${models.every(([, m]) => m.served) ? 'Answered by' : 'Requested'} ${models.map(([req, m]) => `<strong>${esc(m.served ?? req)}</strong> ×${m.calls}`).join(', ')}</span>` : '';
   $('#result').innerHTML =
     keep +
     `
@@ -424,6 +449,8 @@ function renderReport(e, isReplay) {
         <span>Category <strong>${esc(r.category)}</strong></span>
         <span><strong>${verified}/${e.checks.length}</strong> citations verified${e.revised ? ' after one revision' : ''}</span>
         <span><strong>${e.stats.steps}</strong> tool calls · <strong>${e.stats.seconds}s</strong>${cost}</span>
+        ${answered}
+        <span>${provenanceTags(state.provenance)}</span>
         ${state.quarantined ? `<span><strong>${state.quarantined}</strong> injection attempt${state.quarantined > 1 ? 's' : ''} quarantined</span>` : ''}
       </div>
     </section>
@@ -498,6 +525,7 @@ function changeCard(c, compact = false) {
     <h2 class="section-title">${compact ? '' : 'Go / No-Go · '}${esc(c.id)}</h2>
     <p><span class="prio ${c.risk === 'A3' || c.risk === 'A4' ? 'p0' : 'p1'}">${esc(c.risk)}</span> ${esc(KIND_LABEL[c.kind] ?? c.kind)} · ${esc(c.title)}</p>
     <p class="hint">Requested by ${esc(c.requester)} · ${approvals} of ${c.required_approvals} distinct approvals · ${c.execution === 'simulated' ? 'execution simulated on an isolated copy' : 'executes inside IncidentLens'} · expires ${esc(new Date(c.expires_at).toLocaleTimeString())}</p>
+    <p>Source: ${provenanceTags(c.provenance)}</p>
     <p class="hint mono">change hash ${esc(c.hash.slice(0, 16))}… · ${esc(c.policy_version)}</p>
     <p><span class="stamp ${STATE_CLASS[c.state] ?? ''}">${esc(STATE_LABEL[c.state] ?? c.state)}</span> <span class="hint">${esc(c.rule ?? '')}</span></p>
     ${pending ? `<div class="actions"><input class="reason" aria-label="Reason for decision" placeholder="Reason (recorded in the audit log)" data-reason>
@@ -542,7 +570,7 @@ async function showHealth() {
 }
 
 async function refreshHealth() {
-  const [h, skills, audit, changes] = await Promise.all([getJson('/api/health'), getJson('/api/skills'), getJson('/api/audit'), getJson('/api/changes')]);
+  const [h, skills, audit, changes, evo] = await Promise.all([getJson('/api/health'), getJson('/api/skills'), getJson('/api/audit'), getJson('/api/changes'), getJson('/api/evolution')]);
   if (!h || !$('#health-body')) return;
   const breakers = Object.entries(h.reflexes.breakers ?? {});
   $('#health-body').innerHTML = `
@@ -567,7 +595,11 @@ async function refreshHealth() {
     <section class="card span-2"><h2 class="section-title">Reflexes</h2>
       <p>${breakers.length ? breakers.map(([m, b]) => `<span class="chip">${esc(m)}: ${b.open ? 'circuit open' : `${b.failures} recent failures`}</span>`).join(' ') : '<span class="hint">All model circuits closed.</span>'}
       ${h.reflexes.rejected_params.length ? ` <span class="chip">adapted: ${esc(h.reflexes.rejected_params.join(', '))} not sent</span>` : ''}
-      ${h.faults.map((f) => ` <span class="chip">fault: ${esc(f.kind)} ${esc(f.model)} until ${esc(new Date(f.until).toLocaleTimeString())}</span>`).join('')}</p>
+      ${h.faults.map((f) => ` <span class="chip">simulated fault: ${esc(f.kind)} ${esc(f.model)} until ${esc(new Date(f.until).toLocaleTimeString())}</span>`).join('')}</p>
+    </section>
+    <section class="card span-2"><h2 class="section-title">Evolution ledger · improvement opportunities</h2>
+      <p class="hint">Faults seen in recorded runs become proposals, each linked to its run. Entries change nothing by themselves. ${evo?.verify?.ok ? `<span class="stamp ok">chain intact · ${evo.verify.length} entries</span>` : evo?.verify ? `<span class="stamp breached">broken at #${evo.verify.broken_at}</span>` : ''}</p>
+      ${(evo?.entries ?? []).slice(0, 6).map(evoItem).join('') || '<p class="hint">No opportunities yet. A model failover or a quarantined injection in a recorded run adds one.</p>'}
     </section>
     <section class="card span-2"><h2 class="section-title">Change requests</h2>
       <p class="hint">Agents and the doctor only propose. Approval is bound to the exact change hash, the requester cannot approve, and a veto or expiry always wins. ${esc(changes?.policy?.version ?? '')}</p>
@@ -583,7 +615,7 @@ async function refreshHealth() {
       </tbody></table></div>
     </section>
     <section class="card"><h2 class="section-title">Audit log · newest first</h2>
-      <div class="table-scroll"><table class="ind"><tbody>${(audit?.entries ?? []).slice(0, 12).map((a) => `<tr><td class="num">#${a.seq}</td><td>${esc(a.actor)}</td><td>${esc(a.action)} ${esc(a.target)}</td><td class="num">${esc(a.hash.slice(0, 10))}</td></tr>`).join('') || '<tr><td class="hint">No self-changes yet.</td></tr>'}</tbody></table></div>
+      <div class="table-scroll"><table class="ind"><tbody>${(audit?.entries ?? []).slice(0, 12).map((a) => `<tr><td class="num">#${a.seq}</td><td>${esc(a.actor)}${/^chaos:/.test(a.actor) ? ' ' + tag(['queued', 'simulated']) : ''}</td><td>${esc(a.action)} ${esc(a.target)}</td><td class="num">${esc(a.hash.slice(0, 10))}</td></tr>`).join('') || '<tr><td class="hint">No self-changes yet.</td></tr>'}</tbody></table></div>
     </section>`;
   $('#heal-run').addEventListener('click', runSelfRepair);
   document.querySelectorAll('[data-chaos]').forEach((b) => b.addEventListener('click', () => chaos(b.dataset.chaos)));
@@ -593,6 +625,20 @@ async function refreshHealth() {
     await fetch('/api/governance/kill', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ on: !changes?.kill?.on, reason: 'set from the health page' }) });
     refreshHealth();
   });
+}
+
+function evoItem(a) {
+  const d = a.detail ?? {};
+  const o = d.outcome ?? {};
+  const answered = (o.models ?? []).map((m) => `${esc(m.served ?? `${m.requested} (requested)`)} ×${m.calls}`).join(', ');
+  const result = o.completed ? `run completed${o.diagnosis_correct === null ? '' : `, diagnosis ${o.diagnosis_correct ? 'correct' : 'wrong'}`}${answered ? `, answered by ${answered}` : ''}` : `run failed: ${esc(o.error ?? '')}`;
+  return `<div class="gate compact">
+    <p><span class="stamp ${d.category === 'security' ? 'breached' : 'open'}">${esc(d.category)}</span> <strong>${esc(String(d.signal).replace(/-/g, ' '))}</strong> · ${d.occurrences} event${d.occurrences === 1 ? '' : 's'} · ${d.simulated === true ? tag(['queued', d.category === 'security' ? 'planted in a synthetic incident' : 'simulated fault']) : d.simulated === false ? tag(['verified', 'not simulated']) : tag(['cancelled', 'simulation not recorded'])} · <span class="hint">#${a.seq} ${esc(new Date(a.at).toLocaleString())}</span></p>
+    <p>Run: ${provenanceTags(d.provenance)}</p>
+    <p class="hint">${esc(d.first ?? (d.lines ?? []).join(', '))}</p>
+    <p>${result}${o.cost_usd != null ? ` · $${Number(o.cost_usd).toFixed(3)}` : ''}</p>
+    <p class="hint">Proposal: ${esc(d.proposal)} Evidence: <code>${esc(a.target)}</code> · regression test: ${esc(d.regression_test)} · status <span class="stamp open">${esc(d.status)}</span></p>
+  </div>`;
 }
 
 async function chaos(fault) {

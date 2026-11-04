@@ -8,7 +8,7 @@ agrees on a root cause. Nothing an agent claims is taken on trust: every quote i
 the source, every patch is applied to an isolated copy, and every change, including changes
 IncidentLens makes to itself, goes through a governance gate that the AI cannot approve or bypass.
 
-> **Status, 2026-11-04.** Every feature below is implemented and covered by 60 automated tests
+> **Status, 2026-11-04.** Every feature below is implemented and covered by 69 automated tests
 > (CI on every push), which use a scripted stand-in model. **First live Muse evaluation,
 > 2026-11-04**, on `muse-wonder-1.0` and `muse-spark-1.3`, one run per incident:
 > - Solo mode found the root cause in 5 of 5 incidents, War Room mode in 5 of 5.
@@ -26,8 +26,9 @@ IncidentLens makes to itself, goes through a governance gate that the AI cannot 
 1. **Investigates.** Solo mode runs one agent. War Room mode runs six: a Commander and a Skeptic
    on `muse-wonder-1.0` (deep reasoning), Signals, Platform and Code specialists on
    `muse-spark-1.3` (fast), and a Fixer. They share a board, ask each other for help, and work
-   to priorities. A live update ("duplicate charges still happening") pauses lower-priority work
-   so the team mitigates first, the way an incident commander would.
+   to priorities. A mid-incident update ("duplicate charges still happening"; scripted in the
+   test incidents) pauses lower-priority work so the team mitigates first, the way an incident
+   commander would.
 2. **Refuses quotes it cannot find.** Facts enter the shared board only if their quote is found in
    the cited file at the cited lines, so one agent's hallucination cannot become another agent's
    premise. The Commander cannot conclude until the Skeptic has tried to disprove the leading
@@ -47,6 +48,11 @@ IncidentLens makes to itself, goes through a governance gate that the AI cannot 
    wait for human approval. Approved versions go live on the next run with no restart. The
    Doctor can only change skills (prompts and runbooks), never its constitution, verifier,
    policies, tools, scoring or code.
+6. **Keeps working when a model fails.** If Muse Wonder fails, calls fail over to Muse Spark and a
+   circuit breaker routes around Wonder until it recovers. The report names the model that
+   actually answered, and each failover or quarantined injection becomes a hash-chained Evolution
+   Ledger entry that proposes an improvement. Shown live with an injected outage:
+   [docs/CONTINUITY_DEMO.md](docs/CONTINUITY_DEMO.md).
 
 IncidentLens improves the system around Muse (skills, retrieval, routing, verification). It does
 not change Muse's model weights.
@@ -56,7 +62,7 @@ not change Muse's model weights.
 Requires Node 24 or newer. There are no runtime dependencies to install.
 
 ```powershell
-npm test                 # 60 tests: verifier, War Room, governance, self-repair, access, guards, security
+npm test                 # 69 tests: verifier, War Room, governance, self-repair, access, guards, security, continuity, provenance
 npm run demo:offline     # full UI with a scripted model (no API key; inc-001 only), http://localhost:5173
 npm start                # live, with Muse: needs MODEL_API_KEY and working Meta billing
 npm run eval             # score solo mode on all incidents (add --warroom for War Room mode)
@@ -130,6 +136,9 @@ cannot read (enforced and tested).
 
 ## Limits, stated plainly
 
+- Every incident here is synthetic, and every screen says so. Each record also says whether a
+  live Muse model or a scripted one answered, and names any simulated fault. Records made
+  before 2026-11-04 13:30 ET carry no such label and are shown as "source not recorded".
 - A verified citation proves the quoted text exists at the cited lines. It does not prove the conclusion drawn from it.
 - Live Muse results so far are one run per incident on five incidents written by the authors,
   scored by keyword groups. They show the system works end to end on Muse; they are not a

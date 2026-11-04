@@ -1,5 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { recordOpportunities } from './evolution/ledger.ts';
+import { incidentSource, provenanceNow } from './provenance.ts';
 import { loadConstitution } from './guard/constitution.ts';
 import { listArtifacts, loadGroundTruth, loadMeta, type IncidentMeta } from './incidents.ts';
 import { MODELS, Usage, WIRE } from './llm.ts';
@@ -109,7 +111,7 @@ export async function investigate(incidentId: string, emit: Emit, opts: { view?:
     const view = opts.view ?? (await getRegistry()).view();
     const meta = await loadMeta(incidentId);
     const artifacts = await listArtifacts(incidentId);
-    send({ type: 'start', mode: 'solo', incident: meta, model: MODELS.deep, wire: WIRE, artifacts: artifacts.length, at: new Date().toISOString(), skills: { revision: view.revision, versions: view.versions(), candidate: view.overridden } });
+    send({ type: 'start', mode: 'solo', incident: meta, provenance: provenanceNow(incidentSource(meta)), model: MODELS.deep, wire: WIRE, artifacts: artifacts.length, at: new Date().toISOString(), skills: { revision: view.revision, versions: view.versions(), candidate: view.overridden } });
 
     const ctx: ToolContext = { caseId: incidentId, knowledge: buildKnowledge(view, await loadCases()), onQuarantine: quarantineTracker(send) };
     let revisions = 0;
@@ -153,4 +155,5 @@ export async function saveRun(incidentId: string, events: AgentEvent[]) {
   await mkdir(dir, { recursive: true });
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
   await writeFile(path.join(dir, `${stamp}.json`), JSON.stringify({ model: MODELS.deep, wire: WIRE, events }, null, 2));
+  await recordOpportunities(incidentId, `${stamp}.json`, events);
 }

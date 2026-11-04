@@ -54,7 +54,11 @@ explicit (approvals bound to the exact change, veto, expiry, kill switch).
    Its constitution is pinned by hash in code.
 
 ## What is real and what is simulated
-- Implemented and covered by 60 automated tests in CI: verification, the War Room scheduler,
+- Every screen and record says where its data came from: **synthetic incident** (all five are
+  authored test cases), **live Muse** or **scripted model, not Muse**, and any **simulated
+  fault**. Change requests, Evolution Ledger entries, replays and evaluation scores carry the
+  same labels. Records made before these labels existed say "source not recorded", never "real".
+- Implemented and covered by 69 automated tests in CI: verification, the War Room scheduler,
   governance, self-repair, retrieval, access control and the guards.
 - **Live Muse results (2026-11-04, one run per incident).**
   - Solo (`muse-wonder-1.0`): 5 of 5 root causes correct, 5 of 5 fix targets, 51 of 51
@@ -71,6 +75,10 @@ explicit (approvals bound to the exact change, veto, expiry, kill switch).
 - A verified citation proves the quoted text exists at the cited lines. It does not prove the conclusion drawn from it. Causal conclusions are
   judged by the Skeptic agent, by scoring against hidden answer keys in evaluation, and by the
   humans who approve the fix. Claim-level verification is planned (issue #6).
+- Continuity, shown live on Muse with an injected Wonder outage: failover to Spark, circuit
+  breaker, recovery, and an Evolution Ledger entry for the fault. The outage is simulated;
+  Spark's answers are real. No streaming recovery or zero-downtime claim
+  ([docs/CONTINUITY_DEMO.md](CONTINUITY_DEMO.md)).
 - Remediation execution is simulated by design: patches are applied to an isolated copy, never
   to a real system.
 - The offline demo uses a scripted model labelled "not Muse". The self-repair demo uses seeded
@@ -83,7 +91,7 @@ GitHub Actions.
 ## Try it
 ```
 git clone https://github.com/SandeepSubbiah/incidentlens && cd incidentlens
-npm test               # 60 tests, no key needed
+npm test               # 69 tests, no key needed
 npm run demo:offline   # full UI with a scripted model, http://localhost:5173
 npm start              # live, with MODEL_API_KEY
 ```
