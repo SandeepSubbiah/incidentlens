@@ -269,3 +269,45 @@ dialog input { width: 100%; font: 14px var(--mono); padding: 10px; border: 1px s
   .btn.small, .mode button, details summary, .linkish { min-height: 44px; }
   .gate .reason, dialog input { min-height: 44px; font-size: 16px; }
 }
+
+
+/* Public, evidence-backed capability pages. All colors reuse the dashboard theme tokens. */
+.capability-link { display: grid; gap: 2px; padding: 10px; min-height: 44px; border-radius: 6px; text-decoration: none; color: var(--ink); }
+.capability-link:hover, .capability-link:focus-visible { background: var(--paper); }
+.cap-topnav { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
+.cap-topnav a { color: var(--ink); font-size: 13px; font-weight: 600; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.cap-page { width: min(1160px, 100%); margin: auto; padding: clamp(20px, 4vw, 60px); }
+.cap-eyebrow { font: 600 12px/1.5 var(--mono); color: var(--muted); letter-spacing: .08em; }
+.cap-page h1 { font: 600 clamp(30px, 4.8vw, 58px)/1.07 var(--display); max-width: 19ch; margin: 12px 0 24px; }
+.cap-page h2 { font: 600 clamp(22px, 3vw, 30px)/1.2 var(--display); margin: 48px 0 18px; }
+.cap-page h3 { font: 600 21px/1.2 var(--display); margin: 12px 0 8px; }
+.cap-page a:not(.btn) { color: inherit; text-underline-offset: 3px; }
+.cap-lead { max-width: 85ch; font-size: 17px; line-height: 1.65; }
+.cap-lead.cap-small { font-size: 15px; }
+.cap-disclosure { max-width: 100ch; border-left: 4px solid var(--warn); background: var(--warn-bg); padding: 12px 16px; line-height: 1.6; }
+.cap-metrics { margin: 32px 0 12px; display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; }
+.cap-metrics > div { min-width: 0; background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; padding: 18px; }
+.cap-metrics strong { display: block; font: 600 clamp(22px, 2.7vw, 34px)/1.15 var(--display); font-variant-numeric: tabular-nums; }
+.cap-metrics span { display: block; font-size: 13px; color: var(--muted); margin-top: 8px; }
+.cap-note { color: var(--muted); font-size: 13px; line-height: 1.7; }
+.cap-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; }
+.cap-tile { min-width: 0; border: 1px solid var(--rule); background: var(--paper); padding: 20px; border-radius: 9px; }
+.cap-tile p { margin: 0; font-size: 14px; line-height: 1.6; }
+.cap-status { display: inline-block; background: var(--ok-bg); color: var(--ok); font: 500 12px/1.5 var(--mono); padding: 3px 7px; border-radius: 4px; }
+.cap-planned { background: var(--warn-bg); color: var(--warn); }
+.cap-future { background: transparent; }
+.cap-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.cap-tags span { display: inline-block; border: 1px solid var(--rule); background: var(--paper); padding: 7px 10px; border-radius: 99px; font-size: 12px; }
+.cap-evidence { margin-top: 48px; padding: 24px; background: var(--paper); border: 1px solid var(--rule); border-radius: 10px; }
+.cap-evidence h2 { margin-top: 0; }
+.cap-evidence p { line-height: 1.7; }
+.cap-button { display: inline-flex; align-items: center; justify-content: center; text-align: center; text-decoration: none; }
+.cap-footer { margin-top: 32px; border-top: 1px solid var(--rule); padding-top: 14px; color: var(--muted); font-size: 12px; }
+@media (max-width: 800px) { .cap-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media (max-width: 600px) {
+  .cap-grid { grid-template-columns: minmax(0,1fr); }
+  .cap-page { padding: 20px 16px 36px; }
+  .cap-metrics > div { padding: 12px; }
+  .cap-lead { font-size: 16px; }
+  .cap-topnav { gap: 10px; }
+}
