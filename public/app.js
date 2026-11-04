@@ -548,15 +548,10 @@ async function refreshHealth() {
   $('#health-body').innerHTML = `
     <section class="card"><h2 class="section-title">Indicators · last ${h.window} runs${h.synthetic_runs ? ` · ${h.synthetic_runs} synthetic (seeded)` : ''}</h2>
       ${h.sufficient ? '' : `<p class="hint">Fewer than ${h.min_runs} runs: indicators are shown but never treated as a breach.</p>`}
-      <table class="ind"><thead><tr><th>Indicator</th><th>Value</th><th>Objective</th><th>Status</th></tr></thead><tbody>
+      <div class="table-scroll"><table class="ind"><thead><tr><th>Indicator</th><th>Value</th><th>Objective</th><th>Status</th></tr></thead><tbody>
       ${h.slis.map((s) => `<tr><td>${esc(s.name.replace(/_/g, ' '))}</td><td class="num">${s.value ?? 'n/a'}</td><td class="num">${esc(s.objective)}</td><td><span class="stamp ${s.breached ? 'breached' : 'ok'}">${s.breached ? 'breached' : 'ok'}</span></td></tr>`).join('')}
-      </tbody></table>
+      </tbody></table></div>
       <p class="hint">Constitution ${h.constitution.ok ? '<span class="stamp ok">hash verified</span>' : '<span class="stamp breached">tampered: self-changes locked</span>'} · Audit log ${h.audit.ok ? `<span class="stamp ok">chain intact · ${h.audit.length} entries</span>` : `<span class="stamp breached">broken at #${h.audit.broken_at}</span>`} · skills revision ${h.revision}</p>
-    </section>
-    <section class="card"><h2 class="section-title">Reflexes</h2>
-      <p>${breakers.length ? breakers.map(([m, b]) => `<span class="chip">${esc(m)}: ${b.open ? 'circuit open' : `${b.failures} recent failures`}</span>`).join(' ') : '<span class="hint">All model circuits closed.</span>'}
-      ${h.reflexes.rejected_params.length ? ` <span class="chip">adapted: ${esc(h.reflexes.rejected_params.join(', '))} not sent</span>` : ''}
-      ${h.faults.map((f) => ` <span class="chip">fault: ${esc(f.kind)} ${esc(f.model)} until ${esc(new Date(f.until).toLocaleTimeString())}</span>`).join('')}</p>
     </section>
     <section class="card"><h2 class="section-title">Self-repair</h2>
       <div class="actions">
@@ -569,21 +564,26 @@ async function refreshHealth() {
       ${isAdmin() ? '' : '<p class="hint">Self-repair and fault injection need an admin access code.</p>'}
       <ol class="healthlog" id="heal-log"></ol>
     </section>
-    <section class="card"><h2 class="section-title">Change requests</h2>
+    <section class="card span-2"><h2 class="section-title">Reflexes</h2>
+      <p>${breakers.length ? breakers.map(([m, b]) => `<span class="chip">${esc(m)}: ${b.open ? 'circuit open' : `${b.failures} recent failures`}</span>`).join(' ') : '<span class="hint">All model circuits closed.</span>'}
+      ${h.reflexes.rejected_params.length ? ` <span class="chip">adapted: ${esc(h.reflexes.rejected_params.join(', '))} not sent</span>` : ''}
+      ${h.faults.map((f) => ` <span class="chip">fault: ${esc(f.kind)} ${esc(f.model)} until ${esc(new Date(f.until).toLocaleTimeString())}</span>`).join('')}</p>
+    </section>
+    <section class="card span-2"><h2 class="section-title">Change requests</h2>
       <p class="hint">Agents and the doctor only propose. Approval is bound to the exact change hash, the requester cannot approve, and a veto or expiry always wins. ${esc(changes?.policy?.version ?? '')}</p>
       <div class="actions"><button class="btn ${changes?.kill?.on ? '' : 'danger'} small" id="kill" ${isAdmin() ? '' : 'disabled'}>${changes?.kill?.on ? 'Lift kill switch' : 'Engage kill switch'}</button><span class="status">${changes?.kill?.on ? `Kill switch on (${esc(changes.kill.by)}): nothing executes except rollbacks` : 'Kill switch off'}</span></div>
       <div id="cr-list">${(changes?.changes ?? []).slice(0, 6).map((c) => changeCard(c, true)).join('') || '<p class="hint">No change requests yet.</p>'}</div>
     </section>
     <section class="card"><h2 class="section-title">Skills · live versions</h2>
-      <table class="ind"><thead><tr><th>Skill</th><th>Kind</th><th>Active</th><th>Last change</th></tr></thead><tbody>
+      <div class="table-scroll"><table class="ind"><thead><tr><th>Skill</th><th>Kind</th><th>Active</th><th>Last change</th></tr></thead><tbody>
       ${(skills ?? []).map((s) => {
         const last = s.activations.at(-1);
         return `<tr><td><button class="linkish" data-skill="${esc(s.name)}" data-v="${s.active}" data-prev="${s.activations.at(-2)?.v ?? ''}">${esc(s.name)}</button></td><td>${esc(s.kind)}</td><td class="num">v${s.active} of ${s.versions.length}</td><td class="hint">${esc(last.author)} · ${esc(last.reason)}</td></tr>`;
       }).join('')}
-      </tbody></table>
+      </tbody></table></div>
     </section>
     <section class="card"><h2 class="section-title">Audit log · newest first</h2>
-      <table class="ind"><tbody>${(audit?.entries ?? []).slice(0, 12).map((a) => `<tr><td class="num">#${a.seq}</td><td>${esc(a.actor)}</td><td>${esc(a.action)} ${esc(a.target)}</td><td class="num">${esc(a.hash.slice(0, 10))}</td></tr>`).join('') || '<tr><td class="hint">No self-changes yet.</td></tr>'}</tbody></table>
+      <div class="table-scroll"><table class="ind"><tbody>${(audit?.entries ?? []).slice(0, 12).map((a) => `<tr><td class="num">#${a.seq}</td><td>${esc(a.actor)}</td><td>${esc(a.action)} ${esc(a.target)}</td><td class="num">${esc(a.hash.slice(0, 10))}</td></tr>`).join('') || '<tr><td class="hint">No self-changes yet.</td></tr>'}</tbody></table></div>
     </section>`;
   $('#heal-run').addEventListener('click', runSelfRepair);
   document.querySelectorAll('[data-chaos]').forEach((b) => b.addEventListener('click', () => chaos(b.dataset.chaos)));

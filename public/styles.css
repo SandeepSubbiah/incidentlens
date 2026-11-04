@@ -66,11 +66,14 @@ code, pre, .mono { font-family: var(--mono); font-size: 13px; }
 .model { color: var(--muted); font-family: var(--mono); font-size: 12px; }
 .chip { display: inline-block; font-family: var(--mono); font-size: 12px; padding: 3px 8px; border: 1px solid var(--rule); border-radius: 999px; background: var(--paper); }
 
-.layout { display: grid; grid-template-columns: 260px minmax(0, 1fr) minmax(320px, 440px); min-height: calc(100vh - 50px); }
+/* Rail and side panel grow with the screen, so wide monitors give the trail and source more room
+   rather than leaving an empty band. Past 2560px the whole app is centred. */
+.layout { display: grid; grid-template-columns: clamp(260px, 16vw, 320px) minmax(0, 1fr) clamp(320px, 30vw, 760px); grid-template-rows: auto 1fr; min-height: calc(100vh - 50px); max-width: 2560px; margin-inline: auto; }
 .layout > * { min-width: 0; }
+.topbar { max-width: 2560px; margin-inline: auto; }
 
 /* Rail */
-.rail { border-right: 1px solid var(--rule); padding: 16px 12px; }
+.rail { grid-column: 1; grid-row: 1; border-right: 1px solid var(--rule); padding: 16px 12px; }
 .rail-title, .section-title, .subtitle { font-family: var(--display); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 8px; }
 .rail-gap { margin-top: 20px; }
 .subtitle { font-size: 12px; margin-top: 4px; }
@@ -84,14 +87,14 @@ code, pre, .mono { font-family: var(--mono); font-size: 13px; }
 .sev-SEV-2 { color: var(--sev2); }
 .sev-SEV-3 { color: var(--muted); }
 
-.scoreboard { margin-top: 24px; font-size: 13px; }
+.scoreboard { grid-column: 1; grid-row: 2; border-right: 1px solid var(--rule); padding: 8px 12px 24px; font-size: 13px; }
 .scoreboard table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 12px; }
 .scoreboard td { padding: 3px 0; border-bottom: 1px solid var(--rule); }
-.scoreboard td:last-child { text-align: right; }
+.scoreboard td:last-child { text-align: right; white-space: nowrap; }
 .scoreboard .headline { font-family: var(--display); font-size: 28px; font-weight: 600; line-height: 1.1; }
 
 /* Case file */
-.case { padding: 24px 28px 64px; max-width: 920px; min-width: 0; }
+.case { grid-column: 2; grid-row: 1 / 3; padding: 24px 28px 64px; width: 100%; max-width: 1200px; margin-inline: auto; min-width: 0; overflow-wrap: break-word; container-type: inline-size; }
 .empty, .hint { color: var(--muted); }
 .alert-head h1 { font-family: var(--display); font-weight: 600; font-size: 28px; line-height: 1.15; margin: 4px 0 8px; }
 .alert-text { margin: 0 0 16px; max-width: 70ch; }
@@ -126,7 +129,7 @@ code, pre, .mono { font-family: var(--mono); font-size: 13px; }
 .quote { font-family: var(--mono); font-size: 13px; white-space: pre-wrap; word-break: break-word; }
 .quote mark { background: var(--marker); color: var(--marker-ink); padding: 0 2px; }
 
-.stamp { font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; border: 1px solid currentColor; white-space: nowrap; }
+.stamp { font-family: var(--mono); font-size: 12px; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; border: 1px solid currentColor; white-space: nowrap; }
 .stamp.verified, .stamp.applies, .stamp.ok, .stamp.supported, .stamp.stands, .stamp.done { color: var(--ok); background: var(--ok-bg); }
 .stamp.misplaced, .stamp.no_removals, .stamp.weakened, .stamp.parked, .stamp.open, .stamp.queued { color: var(--warn); background: var(--warn-bg); }
 .stamp.not_found, .stamp.missing_artifact, .stamp.mismatch, .stamp.breached, .stamp.refuted, .stamp.failed { color: var(--bad); background: var(--bad-bg); }
@@ -143,6 +146,8 @@ pre.code { background: var(--table); border-radius: 6px; padding: 12px; overflow
 .timeline li { display: grid; grid-template-columns: 110px 1fr; gap: 12px; padding: 4px 0; border-bottom: 1px solid var(--rule); }
 .timeline time { font-family: var(--mono); font-size: 12px; color: var(--muted); }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+/* Side by side only when the case column itself has room, whatever the screen size. */
+@container (max-width: 640px) { .grid2 { grid-template-columns: 1fr; } }
 details summary { cursor: pointer; font-weight: 600; min-height: 32px; }
 
 /* War Room */
@@ -156,12 +161,12 @@ details summary { cursor: pointer; font-weight: 600; min-height: 32px; }
 .role-fixer { color: var(--r-fixer); }
 .lanes { display: grid; gap: 2px; }
 .lane { display: grid; grid-template-columns: 110px 168px 76px minmax(0, 1fr); gap: 10px; align-items: center; padding: 8px 4px; border-bottom: 1px solid var(--rule); font-size: 14px; }
-.lane .tier { font-family: var(--mono); font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lane .tier { font-family: var(--mono); font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lane .lane-task { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lane.working { background: var(--table); }
 .lane-status { font-family: var(--mono); font-size: 12px; }
 .lane.working .lane-status::after { content: ' ●'; animation: blink 1s steps(2) infinite; }
-.prio { font-family: var(--mono); font-size: 11px; font-weight: 500; padding: 1px 5px; border-radius: 4px; border: 1px solid var(--rule); }
+.prio { font-family: var(--mono); font-size: 12px; font-weight: 500; padding: 1px 5px; border-radius: 4px; border: 1px solid var(--rule); }
 .prio.p0 { color: var(--paper); background: var(--bad); border-color: var(--bad); }
 .prio.p1 { color: var(--warn); border-color: currentColor; }
 .tasks, .hyps, .facts-list { list-style: none; padding: 0; margin: 0 0 12px; display: grid; gap: 6px; font-size: 13px; }
@@ -175,11 +180,20 @@ details summary { cursor: pointer; font-weight: 600; min-height: 32px; }
 .ind th { text-align: left; font-weight: 600; color: var(--muted); font-size: 12px; padding: 6px 4px; border-bottom: 1px solid var(--rule); }
 .ind td { padding: 8px 4px; border-bottom: 1px solid var(--rule); vertical-align: top; }
 .ind td.num { font-family: var(--mono); white-space: nowrap; }
+/* Tables scroll inside their card on narrow screens instead of widening the page. */
+.table-scroll { overflow-x: auto; }
+/* Health cards: one column, two once the case column has room (wide monitors). */
+#health-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; margin-top: 20px; align-items: start; }
+#health-body > .card { margin-top: 0; }
+@container (min-width: 960px) {
+  #health-body { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #health-body > .span-2 { grid-column: 1 / -1; }
+}
 .linkish { background: none; border: 0; padding: 0; text-align: left; text-decoration: underline; text-underline-offset: 3px; min-height: 24px; }
 .healthlog { list-style: none; padding: 0; margin: 12px 0 0; font-size: 13px; display: grid; gap: 4px; }
 
 /* Side panel */
-.side { border-left: 1px solid var(--rule); display: flex; flex-direction: column; min-width: 0; position: sticky; top: 0; height: 100vh; }
+.side { grid-column: 3; grid-row: 1 / 3; border-left: 1px solid var(--rule); display: flex; flex-direction: column; min-width: 0; position: sticky; top: 0; height: 100vh; }
 .tabs { display: flex; border-bottom: 1px solid var(--rule); }
 .tabs button { flex: 1; background: none; border: 0; padding: 12px; min-height: 44px; font-weight: 600; color: var(--muted); }
 .tabs button[aria-selected="true"] { color: var(--ink); box-shadow: inset 0 -2px 0 var(--ink); }
@@ -215,14 +229,26 @@ dialog label { display: block; font-weight: 600; margin: 12px 0 6px; }
 dialog input { width: 100%; font: 14px var(--mono); padding: 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--table); color: var(--ink); min-height: 44px; }
 .error { color: var(--bad); min-height: 1.5em; margin: 6px 0; }
 
+@media (min-width: 2561px) {
+  .layout { border-inline: 1px solid var(--rule); }
+}
 @media (max-width: 1100px) {
   .layout { grid-template-columns: 220px minmax(0, 1fr); }
-  .side { grid-column: 1 / -1; position: static; height: auto; max-height: 70vh; border-left: 0; border-top: 1px solid var(--rule); }
+  .side { grid-column: 1 / -1; grid-row: 3; position: static; height: auto; max-height: 70vh; border-left: 0; border-top: 1px solid var(--rule); }
 }
+/* Phones: one column in reading order (incidents, case, trail, scores). Incidents become a
+   swipeable row so the case starts near the top of the screen. */
 @media (max-width: 720px) {
-  .layout { grid-template-columns: minmax(0, 1fr); }
+  body { font-size: 16px; }
+  .layout { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; }
+  .rail, .case, .side, .scoreboard { grid-column: 1; grid-row: auto; }
   .rail { border-right: 0; border-bottom: 1px solid var(--rule); padding: 12px 16px; }
+  .scoreboard { border-right: 0; border-top: 1px solid var(--rule); padding: 16px; }
+  #incidents { display: flex; gap: 8px; overflow-x: auto; scroll-snap-type: x mandatory; margin: 0 -16px; padding: 0 16px 8px; scroll-padding-inline: 16px; }
+  #incidents li { flex: 0 0 min(78vw, 300px); scroll-snap-align: start; }
+  #incidents button { height: 100%; align-content: start; border: 1px solid var(--rule); }
   .case { padding: 16px 16px 48px; }
+  .card { padding: 16px; }
   .grid2 { grid-template-columns: 1fr; }
   .timeline li { grid-template-columns: 1fr; gap: 0; }
   .lane { grid-template-columns: 96px 1fr; }
@@ -236,3 +262,10 @@ dialog input { width: 100%; font: 14px var(--mono); padding: 10px; border: 1px s
 .gate.compact { border-top: 1px solid var(--rule); padding: 12px 0 4px; }
 .gate p { margin: 6px 0; }
 .gate .reason { flex: 1; min-width: 180px; font: 14px var(--body); padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--table); color: var(--ink); min-height: 36px; }
+
+/* Touch screens: 44px targets, and 16px inputs so iOS does not zoom on focus. Last in the file
+   so it overrides the base sizes above. */
+@media (pointer: coarse) {
+  .btn.small, .mode button, details summary, .linkish { min-height: 44px; }
+  .gate .reason, dialog input { min-height: 44px; font-size: 16px; }
+}

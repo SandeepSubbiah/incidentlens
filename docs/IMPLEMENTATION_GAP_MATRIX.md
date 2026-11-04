@@ -35,7 +35,7 @@ that morning the API returned `402 billing_not_configured`.
 | Symlink and junction escape from a case | Implemented + verified | `paths.test.ts` |
 | Durable, multi-instance, restart-safe state | **Partial**: JSON files, atomic writes, write-ahead execution record, restart recovery tested; no multi-instance locking | `governance-races.test.ts` |
 | Access-code revocation | **Missing** | |
-| UI: solo, War Room, health, governance | Implemented; checked with Playwright scripts outside CI, offline and live (replay of a live War Room run, one live solo run). Known issue: a 13px horizontal scroll on a 390px phone after a War Room replay | |
+| UI: solo, War Room, health, governance | Implemented; checked with Playwright scripts outside CI, offline and live (replay of a live War Room run, one live solo run). Responsive from 320px phones to 3840px monitors: no horizontal scroll at 11 widths, no text under 12px, 44px touch targets on phones (measured 2026-11-04) | |
 | Offline demo mode | Implemented + smoke-tested | `scripts/offline-demo.ts` |
 | Eval harness (`npm run eval`) | Implemented; **first live results** (n = 1): solo 5/5, War Room 5/5 root causes. Its "patches apply" count misses add-only patches that do apply | `src/eval.ts`, `eval/` |
 | Image, video or voice evidence | **Missing** | |
