@@ -325,3 +325,6 @@ dialog input { width: 100%; font: 14px var(--mono); padding: 10px; border: 1px s
   #cost-body > .span-2 { grid-column: 1 / -1; }
 }
 @media (pointer: coarse) { .chip.spend { min-height: 44px; } }
+
+/* An investigation still streaming in the background */
+#incidents button[data-running] .inc-meta::after { content: ' · live run'; color: var(--warn); font-weight: 600; }

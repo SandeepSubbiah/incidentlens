@@ -38,7 +38,10 @@ const HEAL_LABEL = {
   'transport-retry': 'Connection retry',
 };
 
-const state = { config: {}, session: {}, incidents: [], current: null, mode: 'solo', abort: null, tasks: new Map(), facts: [], quarantined: 0, rejected: 0 };
+// `live` is the investigation streaming from the server, which keeps running when the user looks
+// elsewhere; its events are buffered so the view can be rebuilt on return. `viewSeq` changes
+// whenever the main view changes, so a stream or replay only draws into the view it started in.
+const state = { config: {}, session: {}, incidents: [], current: null, mode: 'solo', live: null, viewSeq: 0, tasks: new Map(), facts: [], quarantined: 0, rejected: 0 };
 
 async function getJson(url, init) {
   const res = await fetch(url, init);
@@ -67,7 +70,7 @@ async function readStream(url, onEvent, signal) {
 }
 
 const roleTag = (role) => (role && ROLE_LABEL[role] ? `<span class="role role-${role}">${ROLE_LABEL[role]}</span>` : `<span class="role">${esc(role ?? 'Agent')}</span>`);
-const canRun = () => state.config.key && (!state.config.gated || (state.session?.sub && state.session.runs_left > 0));
+const canRun = () => state.config.key && !state.live?.running && (!state.config.gated || (state.session?.sub && state.session.runs_left > 0));
 const isAdmin = () => !state.config.gated || state.session?.role === 'admin';
 
 async function init() {
@@ -149,8 +152,9 @@ function markNav(id) {
 }
 
 async function select(id) {
-  state.abort?.abort();
+  state.viewSeq++;
   state.current = state.incidents.find((i) => i.id === id);
+  if (state.live?.id === id) state.mode = state.live.mode;
   markNav(id);
   const c = state.current;
   $('#case').innerHTML = `
@@ -177,7 +181,23 @@ async function select(id) {
   $('#trail').innerHTML = `<p class="hint">Each tool call, message and decision appears here as it happens.</p>`;
   $('#source').innerHTML = `<p class="hint">Select a citation to open the file at the cited lines.</p>`;
   showTab('trail');
+  const seq = state.viewSeq;
   await setMode(state.mode);
+  if (state.live?.id === id && state.viewSeq === seq) attachLive();
+}
+
+// Rebuilds the view of the live run from its buffered events, then keeps drawing new ones.
+function attachLive() {
+  const live = state.live;
+  reset();
+  live.seq = ++state.viewSeq;
+  for (const e of live.events) handle(e, live.id);
+  if (live.running) setBusy(true, `${live.mode === 'warroom' ? 'War Room in session' : 'Investigating'} · reconnected to the live run`);
+  else setBusy(false);
+}
+
+function markRunning(id, on) {
+  document.querySelector(`#incidents button[data-id="${id}"]`)?.toggleAttribute('data-running', on);
 }
 
 async function setMode(mode) {
@@ -190,7 +210,10 @@ async function setMode(mode) {
   replay.hidden = !recorded;
   replay.onclick = () => replayRun(id, recorded);
   $('#run').disabled = !canRun();
-  $('#status').textContent = !state.config.key
+  const other = state.live?.running && state.live.id !== id ? state.incidents.find((i) => i.id === state.live.id) : null;
+  $('#status').textContent = other
+    ? `A live investigation is still running on "${other.title}". Open it to watch; start another when it finishes.`
+    : !state.config.key
     ? 'Set MODEL_API_KEY and restart the server to investigate live.'
     : state.config.gated && !state.session?.sub
       ? 'Enter an access code to investigate live.'
@@ -225,16 +248,27 @@ function reset() {
 }
 
 async function runLive(id) {
+  if (state.live?.running) return;
   reset();
+  const live = { id, mode: state.mode, events: [], running: true, seq: ++state.viewSeq };
+  state.live = live;
+  markRunning(id, true);
   setBusy(true, state.mode === 'warroom' ? 'War Room in session' : 'Investigating');
-  const ac = new AbortController();
-  state.abort = ac;
+  // Not aborted on navigation: the server keeps working either way, so keep listening and buffer.
+  const onEvent = (e) => {
+    live.events.push(e);
+    if (state.viewSeq === live.seq) handle(e, id);
+  };
   try {
-    await readStream(`/api/investigate/${id}?mode=${state.mode}`, (e) => handle(e, id), ac.signal);
+    await readStream(`/api/investigate/${id}?mode=${live.mode}`, onEvent);
   } catch (err) {
-    if (err.name !== 'AbortError') handle({ type: 'error', message: err.message }, id);
+    onEvent({ type: 'error', message: err.message });
   } finally {
-    if (state.current?.id === id) setBusy(false);
+    live.running = false;
+    markRunning(id, false);
+    if (state.viewSeq === live.seq) setBusy(false);
+    // Watching another incident: re-enable its Investigate button now this run has finished.
+    else if (state.current && !$('#status')?.classList.contains('working')) setMode(state.mode);
     state.session = (await getJson('/api/session')) ?? state.session;
     renderHeader();
     renderSpend();
@@ -253,7 +287,7 @@ async function renderSpend() {
 }
 
 async function showCosts() {
-  state.abort?.abort();
+  state.viewSeq++;
   state.current = null;
   markNav('costs');
   $('#trail').innerHTML = `<p class="hint">Spend is recorded per run. Open an incident to see its running cost.</p>`;
@@ -289,13 +323,15 @@ async function showCosts() {
 
 async function replayRun(id, run) {
   reset();
+  const seq = ++state.viewSeq;
   setBusy(true, 'Replaying');
   const start = run.events.find((e) => e.type === 'start');
   // Above the War Room panel, so the label stays on screen while a replay plays.
   $('#replay-note').innerHTML = `<div class="notice replay">Replay of a recorded run (${esc(start?.model ?? run.model)}) from ${esc(new Date(start?.at ?? Date.now()).toLocaleString())}. Choose Investigate for a live run. ${provenanceTags(start?.provenance)}</div>`;
   const pace = state.mode === 'warroom' ? 140 : 220;
   for (const e of run.events) {
-    if (state.current?.id !== id) return;
+    // Stop when the user opens anything else, including this same incident again.
+    if (state.viewSeq !== seq) return;
     handle(e, id, true);
     if (!reducedMotion && ['step', 'verification', 'preempt', 'live_update', 'message'].includes(e.type)) await new Promise((r) => setTimeout(r, pace));
   }
@@ -615,7 +651,7 @@ function bindChangeCard(id) {
 
 /* Health and self-repair */
 async function showHealth() {
-  state.abort?.abort();
+  state.viewSeq++;
   state.current = null;
   markNav('health');
   $('#case').innerHTML = `<div class="alert-head"><span class="inc-meta">IncidentLens itself</span><h1>Health and self-repair</h1>
