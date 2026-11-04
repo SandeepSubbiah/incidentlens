@@ -1,0 +1,12 @@
+2026-10-31T17:58:02.441Z  INFO 1 --- [nio-8080-exec-3] c.a.billing.ChargeService : capture orderId=ord_90411 amount=55.00 CAD chargeId=ch_3Pq81a status=SUCCEEDED tookMs=640
+2026-10-31T18:01:15.009Z  WARN 1 --- [scheduling-1] c.a.billing.ledger.LedgerSync : ledger sync lag 4.2s (threshold 5s)
+2026-10-31T18:05:41.112Z  WARN 1 --- [nio-8080-exec-7] i.g.r.retry.internal.RetryImpl : Retry 'paymentGateway', waiting PT0.5S until attempt '2'. Last attempt failed with exception 'java.net.SocketTimeoutException: Read timed out'.
+2026-10-31T18:05:43.790Z  INFO 1 --- [nio-8080-exec-7] c.a.billing.ChargeService : capture orderId=ord_90502 amount=129.99 CAD chargeId=ch_3Pq9Xk status=SUCCEEDED tookMs=4791
+2026-10-31T18:06:10.338Z  WARN 1 --- [nio-8080-exec-2] i.g.r.retry.internal.RetryImpl : Retry 'paymentGateway', waiting PT0.5S until attempt '2'. Last attempt failed with exception 'java.net.SocketTimeoutException: Read timed out'.
+2026-10-31T18:06:12.851Z  WARN 1 --- [nio-8080-exec-2] i.g.r.retry.internal.RetryImpl : Retry 'paymentGateway', waiting PT0.5S until attempt '3'. Last attempt failed with exception 'java.net.SocketTimeoutException: Read timed out'.
+2026-10-31T18:06:14.977Z  INFO 1 --- [nio-8080-exec-2] c.a.billing.ChargeService : capture orderId=ord_90517 amount=19.50 CAD chargeId=ch_3PqA2m status=SUCCEEDED tookMs=7121
+2026-10-31T18:07:30.004Z  WARN 1 --- [scheduling-1] c.a.billing.ledger.LedgerSync : ledger sync lag 6.8s (threshold 5s)
+2026-10-31T18:08:02.660Z  WARN 1 --- [nio-8080-exec-5] i.g.r.retry.internal.RetryImpl : Retry 'paymentGateway', waiting PT0.5S until attempt '2'. Last attempt failed with exception 'java.net.SocketTimeoutException: Read timed out'.
+2026-10-31T18:08:05.201Z  INFO 1 --- [nio-8080-exec-5] c.a.billing.ChargeService : capture orderId=ord_90544 amount=74.25 CAD chargeId=ch_3PqB7r status=SUCCEEDED tookMs=4618
+2026-10-31T18:09:44.019Z ERROR 1 --- [scheduling-1] c.a.billing.ledger.LedgerSync : ledger sync failed: 409 Conflict from ledger-api (duplicate external reference ord_90517)
+2026-10-31T18:10:01.330Z  INFO 1 --- [nio-8080-exec-1] c.a.billing.ChargeService : capture orderId=ord_90560 amount=12.00 CAD chargeId=ch_3PqC1d status=SUCCEEDED tookMs=1880

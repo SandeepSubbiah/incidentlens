@@ -1,0 +1,13 @@
+$ kafka-consumer-groups.sh --describe --group inventory-reservations
+
+GROUP                   TOPIC             PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG    CONSUMER-ID
+inventory-reservations  orders.placed.v1  0          1879012         1880901         1889   consumer-1-0b2f
+inventory-reservations  orders.placed.v1  1          1880455         1882377         1922   consumer-1-0b2f
+inventory-reservations  orders.placed.v1  2          1879930         1881804         1874   consumer-2-91ac
+inventory-reservations  orders.placed.v1  3          1882434         1882510         76     consumer-2-91ac
+
+$ kafka-run-class.sh kafka.tools.GetOffsetShell --topic orders.placed.v1.DLT
+orders.placed.v1.DLT:0:0
+orders.placed.v1.DLT:1:0
+orders.placed.v1.DLT:2:0
+orders.placed.v1.DLT:3:43

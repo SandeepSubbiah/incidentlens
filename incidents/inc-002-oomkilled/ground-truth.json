@@ -1,0 +1,9 @@
+{
+  "root_cause": "A cost-optimisation change lowered the container memory limit from 1536Mi to 1024Mi, but JAVA_OPTS still hard-codes -Xmx1024m. Heap alone can now reach the container limit, and heap plus metaspace, thread stacks and direct buffers exceed it, so the kernel OOM-kills the JVM (exit 137) with no Java OutOfMemoryError.",
+  "must_mention": [
+    ["xmx", "heap", "maxramPercentage"],
+    ["limit", "1024mi", "container memory"],
+    ["oomkill", "oom-kill", "oom kill", "137", "kernel"]
+  ],
+  "fix_artifact": "k8s/deployment.yaml"
+}

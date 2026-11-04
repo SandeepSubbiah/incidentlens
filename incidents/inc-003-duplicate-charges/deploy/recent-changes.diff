@@ -1,0 +1,20 @@
+commit 51fe0c2
+Author: dev-billing-team
+Date:   2026-10-24T11:03:19Z
+
+    BILL-877: add resilience to gateway calls (retry + circuit breaker)
+
+diff --git a/src/main/java/com/acme/billing/gateway/GatewayClient.java b/src/main/java/com/acme/billing/gateway/GatewayClient.java
++    @Retry(name = "paymentGateway")
++    @CircuitBreaker(name = "paymentGateway")
+     public ChargeResponse createCharge(ChargeRequest request) {
+
+commit 7d20aa4
+Author: dev-billing-team
+Date:   2026-10-31T16:40:55Z
+
+    BILL-902: ledger sync batch size 200 -> 500
+
+diff --git a/src/main/resources/application.yml b/src/main/resources/application.yml
+-  sync-batch-size: 200
++  sync-batch-size: 500

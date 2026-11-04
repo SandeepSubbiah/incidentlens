@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: catalog-service
+  data:
+    redis:
+      host: catalog-cache.storefront.svc.cluster.local
+      timeout: 2s
+
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: readinessState
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+
+recs:
+  base-url: http://recs-api.personalisation.svc.cluster.local

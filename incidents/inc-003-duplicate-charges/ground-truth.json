@@ -1,0 +1,9 @@
+{
+  "root_cause": "The Resilience4j retry on the paymentGateway client retries on SocketTimeoutException. The gateway's latency rose above the 2s read timeout, so the client timed out while the gateway still completed the charge, then retried the non-idempotent POST /v1/charges without an Idempotency-Key, creating a second charge.",
+  "must_mention": [
+    ["retry", "retries", "retried", "resilience4j"],
+    ["timeout", "timed out"],
+    ["idempoten"]
+  ],
+  "fix_artifact": "src/main/java/com/acme/billing/gateway/GatewayClient.java"
+}

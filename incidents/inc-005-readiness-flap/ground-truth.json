@@ -1,0 +1,9 @@
+{
+  "root_cause": "The readiness probe points at the aggregate /actuator/health endpoint, which includes the Redis health indicator, with timeoutSeconds: 1 and failureThreshold: 1. During the Redis node migration Redis latency spiked, the health endpoint took >1s, and pods were marked NotReady and removed from the Service endpoints in bursts, producing 503 no healthy upstream. The recommendation-widget errors are a pre-existing, unrelated issue.",
+  "must_mention": [
+    ["readiness"],
+    ["redis"],
+    ["timeoutseconds", "timeout", "failurethreshold", "health indicator", "/actuator/health"]
+  ],
+  "fix_artifact": "k8s/deployment.yaml"
+}

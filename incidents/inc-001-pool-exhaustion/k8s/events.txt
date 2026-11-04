@@ -1,0 +1,11 @@
+LAST SEEN   TYPE      REASON              OBJECT                                   MESSAGE
+14m         Normal    ScalingReplicaSet   deployment/payment-service               Scaled up replica set payment-service-6d9f8b7c5 to 3
+14m         Normal    Pulled              pod/payment-service-6d9f8b7c5-2kx9q      Container image "registry.acme.io/payment-service:v2.14.0" already present on machine
+14m         Normal    Started             pod/payment-service-6d9f8b7c5-2kx9q      Started container payment-service
+13m         Normal    ScalingReplicaSet   deployment/payment-service               Scaled down replica set payment-service-58c4d9f6b to 0
+6m          Normal    SuccessfulRescale   horizontalpodautoscaler/payment-service  New size: 5; reason: cpu resource utilization (percentage of request) above target
+5m          Warning   Unhealthy           pod/payment-service-6d9f8b7c5-7tq2m      Readiness probe failed: Get "http://10.4.2.17:8080/actuator/health": context deadline exceeded
+2m          Normal    SuccessfulRescale   horizontalpodautoscaler/payment-service  New size: 6; reason: cpu resource utilization (percentage of request) above target
+
+# fraud-service namespace (risk)
+9m          Warning   NodeNotReady        node/gke-risk-pool-3a1f                  Node is not ready; fraud-service-7b6c pods rescheduled, 2/4 replicas serving

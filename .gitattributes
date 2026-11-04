@@ -1,0 +1,2 @@
+# Evidence files are cited by line number; keep them byte-identical across platforms.
+* text=auto eol=lf

@@ -1,0 +1,20 @@
+[2026-10-30T09:44:02.118+0000][info][gc,init] Version: 21.0.4+7-LTS (release)
+[2026-10-30T09:44:02.118+0000][info][gc,init] Heap Min Capacity: 512M
+[2026-10-30T09:44:02.118+0000][info][gc,init] Heap Initial Capacity: 512M
+[2026-10-30T09:44:02.118+0000][info][gc,init] Heap Max Capacity: 1G
+2026-10-30T09:44:14.402Z  INFO 1 --- [main] c.a.orders.OrderServiceApplication : Started OrderServiceApplication in 11.904 seconds (process running for 12.3)
+2026-10-30T09:45:30.771Z  INFO 1 --- [nio-8080-exec-4] c.a.orders.OrderController : placeOrder customer=c_4471 items=3 tookMs=88
+2026-10-30T09:46:12.009Z  WARN 1 --- [nio-8080-exec-9] o.h.SQL_SLOW : Slow query took 612 milliseconds [select o1_0.id,o1_0.customer_id,o1_0.status from orders o1_0 where o1_0.customer_id=? order by o1_0.created_at desc]
+[2026-10-30T09:46:40.204+0000][info][gc] GC(12) Pause Young (Normal) (G1 Evacuation Pause) 498M->231M(612M) 12.882ms
+2026-10-30T09:47:02.118Z  WARN 1 --- [nio-8080-exec-2] o.h.SQL_SLOW : Slow query took 540 milliseconds [select o1_0.id,o1_0.customer_id,o1_0.status from orders o1_0 where o1_0.customer_id=? order by o1_0.created_at desc]
+[2026-10-30T09:48:15.551+0000][info][gc] GC(19) Pause Young (Normal) (G1 Evacuation Pause) 702M->388M(844M) 21.031ms
+2026-10-30T09:48:51.330Z  INFO 1 --- [nio-8080-exec-1] c.a.orders.export.MonthlyStatementJob : building statement batch size=5000
+[2026-10-30T09:49:22.918+0000][info][gc] GC(24) Pause Young (Concurrent Start) (G1 Humongous Allocation) 811M->602M(1024M) 34.117ms
+[2026-10-30T09:50:05.002+0000][info][gc] GC(27) Pause Young (Normal) (G1 Evacuation Pause) 918M->655M(1024M) 29.884ms
+2026-10-30T09:50:41.877Z  WARN 1 --- [nio-8080-exec-6] o.h.SQL_SLOW : Slow query took 701 milliseconds [select o1_0.id,o1_0.customer_id,o1_0.status from orders o1_0 where o1_0.customer_id=? order by o1_0.created_at desc]
+[2026-10-30T09:51:12.640+0000][info][gc] GC(31) Pause Young (Normal) (G1 Evacuation Pause) 961M->702M(1024M) 31.502ms
+2026-10-30T09:51:30.118Z  INFO 1 --- [actuator-metrics] c.a.orders.MemoryReporter : jvm.memory.used heap=741M nonheap=187M (metaspace=142M codecache=38M) threads=212 direct=64M
+[2026-10-30T09:51:36.902+0000][info][gc] GC(33) Pause Young (Normal) (G1 Evacuation Pause) 989M->731M(1024M) 30.004ms
+--- container terminated (no further output; no java.lang.OutOfMemoryError logged) ---
+[2026-10-30T09:51:44.311+0000][info][gc,init] Version: 21.0.4+7-LTS (release)
+[2026-10-30T09:51:44.311+0000][info][gc,init] Heap Max Capacity: 1G

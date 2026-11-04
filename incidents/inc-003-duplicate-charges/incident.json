@@ -1,0 +1,8 @@
+{
+  "id": "inc-003-duplicate-charges",
+  "title": "Customers charged twice for a single order",
+  "service": "billing-service",
+  "severity": "SEV-1",
+  "started_at": "2026-10-31T18:05:00Z",
+  "alert": "Support escalation: 23 tickets in 40 minutes reporting duplicate card charges for one order. Finance reconciliation job flagged 61 orders with more than one captured charge since 18:05 UTC. No error-rate alert fired."
+}

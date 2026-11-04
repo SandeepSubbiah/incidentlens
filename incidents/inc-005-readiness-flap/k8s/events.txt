@@ -1,0 +1,19 @@
+LAST SEEN   TYPE      REASON      OBJECT                                  MESSAGE
+3m          Warning   Unhealthy   pod/catalog-service-77c9d5f8b-4nq8x     Readiness probe failed: Get "http://10.8.1.33:8080/actuator/health": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+3m          Warning   Unhealthy   pod/catalog-service-77c9d5f8b-9vb2k     Readiness probe failed: Get "http://10.8.3.12:8080/actuator/health": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+2m          Warning   Unhealthy   pod/catalog-service-77c9d5f8b-tt7mw     Readiness probe failed: Get "http://10.8.2.41:8080/actuator/health": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+2m          Warning   Unhealthy   pod/catalog-service-77c9d5f8b-4nq8x     Readiness probe failed: Get "http://10.8.1.33:8080/actuator/health": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+
+$ kubectl get endpoints catalog-service -n storefront -w
+NAME              ENDPOINTS                                         AGE
+catalog-service   10.8.1.33:8080,10.8.2.41:8080,10.8.3.12:8080      19d
+catalog-service   10.8.2.41:8080                                    19d
+catalog-service   <none>                                            19d
+catalog-service   10.8.1.33:8080,10.8.3.12:8080                     19d
+catalog-service   10.8.1.33:8080,10.8.2.41:8080,10.8.3.12:8080      19d
+
+$ kubectl get pods -n storefront -l app=catalog-service
+NAME                                READY   STATUS    RESTARTS   AGE
+catalog-service-77c9d5f8b-4nq8x     0/1     Running   0          6d
+catalog-service-77c9d5f8b-9vb2k     1/1     Running   0          6d
+catalog-service-77c9d5f8b-tt7mw     1/1     Running   0          6d

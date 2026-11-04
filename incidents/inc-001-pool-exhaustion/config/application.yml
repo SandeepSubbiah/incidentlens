@@ -1,0 +1,35 @@
+server:
+  port: 8080
+  tomcat:
+    threads:
+      max: 200
+
+spring:
+  application:
+    name: payment-service
+  datasource:
+    url: jdbc:postgresql://payments-db.internal:5432/payments
+    username: payments_app
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      max-lifetime: 1800000
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+clients:
+  fraud:
+    base-url: http://fraud-service.risk.svc.cluster.local
+    connect-timeout: 1s
+    read-timeout: 10s
+  gateway:
+    base-url: https://api.cardgateway.example
+    read-timeout: 5s
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus

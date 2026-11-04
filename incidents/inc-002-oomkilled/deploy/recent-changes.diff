@@ -1,0 +1,31 @@
+commit e71b2f9
+Author: finops-automation
+Date:   2026-10-30T08:55:10Z
+
+    FINOPS-311: right-size commerce workloads based on 30-day p95 memory usage
+
+    order-service p95 container memory over 30 days: 702Mi. Lowering limit
+    to 1024Mi leaves ~45% headroom.
+
+diff --git a/k8s/deployment.yaml b/k8s/deployment.yaml
+--- a/k8s/deployment.yaml
++++ b/k8s/deployment.yaml
+@@ -26,8 +26,8 @@ spec:
+           resources:
+             requests:
+               cpu: 500m
+-              memory: 1Gi
++              memory: 768Mi
+             limits:
+               cpu: "2"
+-              memory: 1536Mi
++              memory: 1024Mi
+
+commit 0a99d3c
+Author: dev-orders-team
+Date:   2026-10-29T16:20:31Z
+
+    ORD-1290: log slow repository queries above 500ms
+
+diff --git a/src/main/resources/application-prod.yml b/src/main/resources/application-prod.yml
++spring.jpa.properties.hibernate.session.events.log.LOG_QUERIES_SLOWER_THAN_MS: 500

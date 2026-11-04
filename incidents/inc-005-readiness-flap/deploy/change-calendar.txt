@@ -1,0 +1,6 @@
+Change calendar — 2026-11-02
+
+10:45-12:30 UTC  INFRA-2290  Redis (catalog-cache) node migration to new instance family. Expected impact: none; brief latency increase possible during resharding.
+13:00-13:30 UTC  CAT-3388    catalog-service v3.8.3 rollout (image-only patch: log format). NOT STARTED.
+
+Deploys to catalog-service in last 72h: none (current v3.8.2 deployed 2026-10-27).

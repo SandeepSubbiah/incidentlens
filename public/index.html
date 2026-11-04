@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IncidentLens</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">IncidentLens</div>
+    <div class="model" id="model"></div>
+  </header>
+
+  <div class="layout">
+    <nav class="rail" aria-label="Incidents">
+      <h2 class="rail-title">Open incidents</h2>
+      <ul id="incidents" class="incident-list"></ul>
+      <section class="scoreboard" id="scoreboard" aria-label="Evaluation results"></section>
+    </nav>
+
+    <main class="case" id="case">
+      <p class="empty">Choose an incident to investigate.</p>
+    </main>
+
+    <aside class="side" aria-label="Investigation trail and source">
+      <div class="tabs" role="tablist">
+        <button role="tab" id="tab-trail" aria-selected="true" data-tab="trail">Trail</button>
+        <button role="tab" id="tab-source" aria-selected="false" data-tab="source">Source</button>
+      </div>
+      <section id="trail" class="panel" role="tabpanel" aria-labelledby="tab-trail">
+        <p class="hint">Each tool call the agent makes appears here as it happens.</p>
+      </section>
+      <section id="source" class="panel" role="tabpanel" aria-labelledby="tab-source" hidden>
+        <p class="hint">Select a citation to open the file at the cited lines.</p>
+      </section>
+    </aside>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

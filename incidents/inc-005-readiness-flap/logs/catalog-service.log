@@ -1,0 +1,15 @@
+2026-11-02T11:08:12.001Z ERROR 1 --- [nio-8080-exec-3] c.a.catalog.widgets.RecommendationWidget : Failed to load recommendation widget for sku=SKU-22817: 404 Not Found from recs-api (/v2/recs/SKU-22817)
+2026-11-02T11:08:12.950Z ERROR 1 --- [nio-8080-exec-9] c.a.catalog.widgets.RecommendationWidget : Failed to load recommendation widget for sku=SKU-10442: 404 Not Found from recs-api (/v2/recs/SKU-10442)
+2026-11-02T11:09:40.118Z ERROR 1 --- [nio-8080-exec-1] c.a.catalog.widgets.RecommendationWidget : Failed to load recommendation widget for sku=SKU-55120: 404 Not Found from recs-api (/v2/recs/SKU-55120)
+2026-11-02T11:10:03.402Z  WARN 1 --- [nio-8080-exec-7] o.s.b.a.health.HealthEndpointSupport : Health contributor org.springframework.boot.actuate.data.redis.RedisReactiveHealthIndicator (redis) took 1288ms to respond
+2026-11-02T11:10:03.405Z  WARN 1 --- [nio-8080-exec-7] o.s.b.a.health.HealthEndpointSupport : Health contributor org.springframework.boot.actuate.jdbc.DataSourceHealthIndicator (db) took 12ms to respond
+2026-11-02T11:10:05.880Z ERROR 1 --- [nio-8080-exec-4] c.a.catalog.widgets.RecommendationWidget : Failed to load recommendation widget for sku=SKU-22817: 404 Not Found from recs-api (/v2/recs/SKU-22817)
+2026-11-02T11:10:21.990Z  INFO 1 --- [nio-8080-exec-2] c.a.catalog.ProductController : GET /products/SKU-10442 200 tookMs=41
+2026-11-02T11:10:33.517Z  WARN 1 --- [nio-8080-exec-5] o.s.b.a.health.HealthEndpointSupport : Health contributor org.springframework.boot.actuate.data.redis.RedisReactiveHealthIndicator (redis) took 1510ms to respond
+2026-11-02T11:10:47.330Z ERROR 1 --- [nio-8080-exec-8] c.a.catalog.widgets.RecommendationWidget : Failed to load recommendation widget for sku=SKU-77001: 404 Not Found from recs-api (/v2/recs/SKU-77001)
+2026-11-02T11:11:03.611Z  WARN 1 --- [nio-8080-exec-6] o.s.b.a.health.HealthEndpointSupport : Health contributor org.springframework.boot.actuate.data.redis.RedisReactiveHealthIndicator (redis) took 1142ms to respond
+2026-11-02T11:11:15.204Z  INFO 1 --- [nio-8080-exec-1] c.a.catalog.ProductController : GET /products/SKU-55120 200 tookMs=58 (cache=MISS redisMs=640)
+2026-11-02T11:11:52.770Z ERROR 1 --- [nio-8080-exec-3] c.a.catalog.widgets.RecommendationWidget : Failed to load recommendation widget for sku=SKU-10442: 404 Not Found from recs-api (/v2/recs/SKU-10442)
+2026-11-02T11:12:33.090Z  WARN 1 --- [nio-8080-exec-9] o.s.b.a.health.HealthEndpointSupport : Health contributor org.springframework.boot.actuate.data.redis.RedisReactiveHealthIndicator (redis) took 1377ms to respond
+
+# Note from #catalog-oncall pinned message (2026-10-12): "RecommendationWidget 404s are expected for SKUs without recs yet; tracked in CAT-3301, harmless, the widget is hidden client-side."

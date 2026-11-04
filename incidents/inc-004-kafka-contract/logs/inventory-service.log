@@ -1,0 +1,15 @@
+2026-11-01T15:20:04.551Z  INFO 1 --- [ntainer#0-0-C-1] c.a.inventory.OrderEventListener : reserved orderId=ord_99120 skus=2 offset=1882301
+2026-11-01T15:26:44.109Z  INFO 1 --- [ntainer#0-0-C-1] c.a.inventory.OrderEventListener : reserved orderId=ord_99188 skus=1 offset=1882377
+2026-11-01T15:29:10.002Z  WARN 1 --- [   scheduling-1] c.a.inventory.sync.ErpStockSync : ERP stock sync took 41s (expected < 30s)
+2026-11-01T15:32:18.774Z ERROR 1 --- [ntainer#0-0-C-1] o.s.k.l.DefaultErrorHandler : Backoff FixedBackOff{interval=1000, currentAttempts=10, maxAttempts=9} exhausted for orders.placed.v1-3@1882390
+org.springframework.kafka.listener.ListenerExecutionFailedException: Listener method 'public void com.acme.inventory.OrderEventListener.onOrderPlaced(java.lang.String)' threw exception
+Caused by: com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException: Unrecognized field "loyaltyTier" (class com.acme.inventory.events.OrderPlacedEvent), not marked as ignorable (5 known properties: "orderId", "customerId", "lines", "placedAt", "channel"])
+ at [Source: REDACTED (`StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION` disabled); line: 1, column: 212] (through reference chain: com.acme.inventory.events.OrderPlacedEvent["loyaltyTier"])
+	at com.fasterxml.jackson.databind.ObjectMapper.readValue(ObjectMapper.java:3821)
+	at com.acme.inventory.OrderEventListener.onOrderPlaced(OrderEventListener.java:31)
+2026-11-01T15:32:18.790Z  INFO 1 --- [ntainer#0-0-C-1] o.s.k.l.DeadLetterPublishingRecoverer : Publishing record orders.placed.v1-3@1882390 to orders.placed.v1.DLT
+2026-11-01T15:32:29.118Z ERROR 1 --- [ntainer#0-0-C-1] o.s.k.l.DefaultErrorHandler : Backoff FixedBackOff{interval=1000, currentAttempts=10, maxAttempts=9} exhausted for orders.placed.v1-3@1882391
+2026-11-01T15:32:29.120Z  INFO 1 --- [ntainer#0-0-C-1] o.s.k.l.DeadLetterPublishingRecoverer : Publishing record orders.placed.v1-3@1882391 to orders.placed.v1.DLT
+2026-11-01T15:35:10.004Z  WARN 1 --- [   scheduling-1] c.a.inventory.sync.ErpStockSync : ERP stock sync took 39s (expected < 30s)
+2026-11-01T15:41:02.661Z ERROR 1 --- [ntainer#0-0-C-1] o.s.k.l.DefaultErrorHandler : Backoff FixedBackOff{interval=1000, currentAttempts=10, maxAttempts=9} exhausted for orders.placed.v1-3@1882433
+2026-11-01T15:41:02.663Z  INFO 1 --- [ntainer#0-0-C-1] o.s.k.l.DeadLetterPublishingRecoverer : Publishing record orders.placed.v1-3@1882433 to orders.placed.v1.DLT

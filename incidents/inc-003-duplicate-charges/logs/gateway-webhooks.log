@@ -1,0 +1,12 @@
+# Webhook deliveries received from the card gateway (charge.succeeded), 18:05-18:10 UTC
+2026-10-31T18:05:42.903Z charge.succeeded id=ch_3Pq9Wb amount=12999 currency=cad metadata.orderId=ord_90502 created=2026-10-31T18:05:40.981Z
+2026-10-31T18:05:43.781Z charge.succeeded id=ch_3Pq9Xk amount=12999 currency=cad metadata.orderId=ord_90502 created=2026-10-31T18:05:43.602Z
+2026-10-31T18:06:11.420Z charge.succeeded id=ch_3PqA0z amount=1950 currency=cad metadata.orderId=ord_90517 created=2026-10-31T18:06:09.877Z
+2026-10-31T18:06:13.990Z charge.succeeded id=ch_3PqA1f amount=1950 currency=cad metadata.orderId=ord_90517 created=2026-10-31T18:06:12.440Z
+2026-10-31T18:06:14.969Z charge.succeeded id=ch_3PqA2m amount=1950 currency=cad metadata.orderId=ord_90517 created=2026-10-31T18:06:14.802Z
+2026-10-31T18:08:03.802Z charge.succeeded id=ch_3PqB6q amount=7425 currency=cad metadata.orderId=ord_90544 created=2026-10-31T18:08:02.211Z
+2026-10-31T18:08:05.190Z charge.succeeded id=ch_3PqB7r amount=7425 currency=cad metadata.orderId=ord_90544 created=2026-10-31T18:08:05.009Z
+2026-10-31T18:10:01.322Z charge.succeeded id=ch_3PqC1d amount=1200 currency=cad metadata.orderId=ord_90560 created=2026-10-31T18:10:00.101Z
+
+# Gateway status page excerpt
+18:04 UTC  Degraded performance - Charge API p99 latency elevated (2.5-3.2s). Requests are being processed.

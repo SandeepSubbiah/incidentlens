@@ -1,0 +1,26 @@
+### order-service (producer) — deployed 2026-11-01T15:30:12Z as v5.3.0
+
+commit c88a0e1
+Author: dev-loyalty-team
+Date:   2026-11-01T13:02:47Z
+
+    LOY-145: include customer loyalty tier on OrderPlaced events for downstream personalisation
+
+diff --git a/order-service/src/main/java/com/acme/orders/events/OrderPlacedEvent.java b/order-service/src/main/java/com/acme/orders/events/OrderPlacedEvent.java
+ public record OrderPlacedEvent(
+         String orderId,
+         String customerId,
+         List<OrderLine> lines,
+         Instant placedAt,
+-        String channel) {
++        String channel,
++        String loyaltyTier) {
+
+### inventory-service (consumer) — no deploys in the last 7 days
+
+### infra
+commit 3b1c7f0
+Author: platform-bot
+Date:   2026-11-01T09:00:00Z
+
+    kafka: increase orders.placed.v1 retention 3d -> 7d

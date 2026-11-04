@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: billing-service
+
+gateway:
+  base-url: https://api.cardgateway.example
+  connect-timeout: 500ms
+  read-timeout: 2s
+
+resilience4j:
+  retry:
+    instances:
+      paymentGateway:
+        max-attempts: 3
+        wait-duration: 500ms
+        retry-exceptions:
+          - java.net.SocketTimeoutException
+          - java.io.IOException
+  circuitbreaker:
+    instances:
+      paymentGateway:
+        failure-rate-threshold: 50
+        sliding-window-size: 50
+
+ledger:
+  base-url: http://ledger-api.finance.svc.cluster.local
+  sync-interval: 30s

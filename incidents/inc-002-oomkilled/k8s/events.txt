@@ -1,0 +1,25 @@
+LAST SEEN   TYPE      REASON              OBJECT                                 MESSAGE
+41m         Normal    ScalingReplicaSet   deployment/order-service               Scaled up replica set order-service-5f7d9c8b4 to 4
+41m         Normal    Started             pod/order-service-5f7d9c8b4-h2kqz      Started container order-service
+33m         Warning   BackOff             pod/order-service-5f7d9c8b4-h2kqz      Back-off restarting failed container order-service in pod order-service-5f7d9c8b4-h2kqz
+33m         Normal    Killing             pod/order-service-5f7d9c8b4-h2kqz      Container order-service exceeded its memory limit
+27m         Normal    Started             pod/order-service-5f7d9c8b4-m8w4t      Started container order-service
+19m         Normal    Killing             pod/order-service-5f7d9c8b4-m8w4t      Container order-service exceeded its memory limit
+12m         Warning   BackOff             pod/order-service-5f7d9c8b4-r6p1d      Back-off restarting failed container order-service in pod order-service-5f7d9c8b4-r6p1d
+4m          Normal    Killing             pod/order-service-5f7d9c8b4-r6p1d      Container order-service exceeded its memory limit
+
+$ kubectl describe pod order-service-5f7d9c8b4-r6p1d | sed -n '/Last State/,/Restart Count/p'
+    Last State:     Terminated
+      Reason:       OOMKilled
+      Exit Code:    137
+      Started:      Fri, 30 Oct 2026 09:44:02 +0000
+      Finished:     Fri, 30 Oct 2026 09:51:37 +0000
+    Ready:          True
+    Restart Count:  7
+
+$ kubectl top pod -l app=order-service
+NAME                                CPU(cores)   MEMORY(bytes)
+order-service-5f7d9c8b4-h2kqz       612m         1003Mi
+order-service-5f7d9c8b4-m8w4t       388m         871Mi
+order-service-5f7d9c8b4-r6p1d       701m         1019Mi
+order-service-5f7d9c8b4-x9c2a       455m         944Mi

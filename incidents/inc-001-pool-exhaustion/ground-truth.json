@@ -1,0 +1,9 @@
+{
+  "root_cause": "PR #482 moved the synchronous fraud-service HTTP call inside the @Transactional authorize() method, so each request holds a Hikari DB connection for the full fraud-check duration. When fraud-service latency rose to ~8s the 10-connection pool was exhausted and requests timed out waiting for a connection after 30s.",
+  "must_mention": [
+    ["hikari", "connection pool", "pool exhaust", "connections"],
+    ["fraud"],
+    ["@transactional", "transaction"]
+  ],
+  "fix_artifact": "src/main/java/com/acme/payments/PaymentService.java"
+}
