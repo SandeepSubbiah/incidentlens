@@ -17,7 +17,12 @@ scripted. Never describe Plan B output as Muse output.
 > "When production breaks, AI can read every log in seconds. The hard parts are trusting what it
 > says, and controlling what it is allowed to change. IncidentLens does both, on Meta Muse."
 
-**0:15–1:00 — The War Room.** Select inc-001, choose **War Room · 6 agents**, click **Investigate**.
+**Plan B only — say this here, and keep the top bar visible:**
+> "Our Meta API billing isn't active yet, so this recording uses a scripted stand-in model. It is
+> not Muse, and these are not Muse's answers. Everything around the model, the verification, the
+> War Room scheduler, governance and self-repair, is real code running live."
+
+**0:15–1:00 — The War Room.** (Plan B: the lanes show `scripted-deep` / `scripted-fast`; do not call them Muse.) Select inc-001, choose **War Room · 6 agents**, click **Investigate**.
 - Point at the lanes: Commander and Skeptic on the deep model, specialists on the fast model.
 - In the trail, find **"Fact rejected: quote not found"**:
   > "An agent tried to post a log line that doesn't exist. It never reached the shared board."
@@ -52,8 +57,11 @@ scripted. Never describe Plan B output as Muse output.
   > its constitution or its grader, and every change is audited."
 
 **2:45–3:00 — Close.**
-> "Open source, 53 automated tests, Muse Wonder for deep reasoning, Muse Spark for fast work.
-> Evidence first, humans in charge."
+- **Plan A:** "Open source, 53 automated tests, Muse Wonder for deep reasoning, Muse Spark for
+  fast work. Evidence first, humans in charge."
+- **Plan B:** "Open source, 53 automated tests. It is built for Muse Wonder and Muse Spark; this
+  recording used a scripted model, and live Muse results are pending on billing. Evidence first,
+  humans in charge."
 
 ## If something goes wrong on camera
 
