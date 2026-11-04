@@ -163,7 +163,10 @@ function recordSuccess(model: string, onHeal: (h: Heal) => void) {
   breakers.delete(model);
 }
 
-const healable = (err: unknown) => !(err instanceof ApiError) || err.status === 429 || err.status >= 500;
+// Only transport failures, timeouts, rate limits and server errors are worth failing over;
+// configuration problems (no key, bad request, billing) would fail the backup model too.
+const healable = (err: unknown) =>
+  err instanceof ApiError ? err.status === 429 || err.status >= 500 : err instanceof TypeError || (err as Error)?.name === 'TimeoutError' || (err as Error)?.name === 'AbortError';
 
 function parseArgs(id: string, name: string, raw: unknown): ToolCall {
   if (typeof raw !== 'string') return { id, name, args: raw ?? {} };
