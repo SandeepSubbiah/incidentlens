@@ -22,6 +22,77 @@ IncidentLens makes to itself, goes through a governance gate that the AI cannot 
 > scripted model, labelled as such. [docs/IMPLEMENTATION_GAP_MATRIX.md](docs/IMPLEMENTATION_GAP_MATRIX.md)
 > says exactly what is verified, simulated, partial or missing.
 
+## Tour
+
+Recorded from the running app on live Meta Muse. The War Room and evidence views replay a real
+Muse run; the incidents are synthetic test cases, and every screen says so.
+
+### 1. Five incidents, and where the data comes from
+
+![Home screen: five incidents labelled synthetic, live Meta API in the top bar, and today's model spend](docs/media/home.gif)
+
+The incident list is labelled **synthetic** (test cases we wrote, with hidden answer keys). The
+top bar shows the models (`muse-wonder-1.0` deep, `muse-spark-1.3` fast), **live Meta API**, and
+today's estimated model spend.
+
+### 2. Six agents in a War Room
+
+![War Room replay: six agents with their models, a scripted priority update, tasks and hypotheses](docs/media/war-room.gif)
+
+- **Roles:** the Commander, Skeptic and Fixer run on Muse Wonder; Signals, Platform and Code run
+  on Muse Spark. Every trail step names the model that made the request.
+- **Priorities:** a **scripted update** from Support says impact is spreading, so the Commander
+  raises tasks to P0 and lower-priority work pauses. A fact whose quote is not in the file is
+  **rejected** before any other agent can see it.
+
+### 3. Evidence and the Skeptic
+
+![Evidence: the Skeptic's verdict, a citation opening its exact source lines, and the run's cost and models](docs/media/evidence.gif)
+
+- **The Skeptic** tries to disprove the leading hypothesis before the Commander may conclude.
+- **Citations:** clicking one opens the file with the cited lines highlighted. A verified citation
+  proves the quote is real, not that the conclusion is right.
+- **The report** shows the run's cost, the models that answered (as Meta's API reported them),
+  and its source: **synthetic incident · live Muse**.
+
+### 4. Go / No-Go: humans decide
+
+![Go / No-Go: one approval, a refused second approval by the same person, then a veto](docs/media/go-no-go.gif)
+
+- **The patch:** checked against the source and **applied to an isolated copy**. Production is
+  never touched.
+- **The change request:** bound to the exact patch by SHA-256, and a production change needs two
+  different approvers.
+- **Refusals:** the same person approving twice is refused (**R5**), and a veto overrides
+  everything (**R2**).
+
+### 5. It repairs itself, within limits
+
+![Self-repair: a seeded synthetic regression breaches an indicator, the Doctor on Muse Wonder diagnoses it and rolls the skill back](docs/media/self-repair.gif)
+
+- **The breach:** a bad skill change is planted with **labelled synthetic runs**, and diagnosis
+  accuracy breaches its objective.
+- **The repair:** the Doctor (Muse Wonder) investigates IncidentLens itself with the same evidence
+  rules, finds the bad edit and rolls it back, live on the next run with no restart.
+- **The limits:** it can change only its skills, never its constitution, verifier or grader, and
+  each change goes into a hash-chained audit log.
+
+### 6. What everything costs
+
+![Usage and cost: estimated remaining credit, spend by period, by model and by source](docs/media/usage-and-cost.png)
+
+- **The breakdown:** spend per run (live, step by step), by model, and by day, week, month,
+  quarter, half-year and year, with an estimated remaining credit when `CREDIT_BUDGET_USD` is set.
+- **These are estimates** from token counts at Meta's published prices. Meta's API has no
+  billing endpoint.
+
+### 7. What is live, and what is not yet
+
+![Capabilities page: measured results, what works today, prototypes and planned work](docs/media/capabilities.gif)
+
+The capabilities page (`/capabilities.html`) lists measured results and labels each feature
+**live**, **tested**, **prototype** or **planned**.
+
 ## See what it does
 
 - **[Capabilities and roadmap](public/capabilities.html)** — the in-app overview of features, evidence, limits and planned improvements. Run the app and open `/capabilities.html` in your browser.
